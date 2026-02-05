@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Absensi Digital - SMK Bina Mandiri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { font-family: "Poppins", sans-serif; background-color: #f3f4f6; }
+        
+        /* Background Login sesuai permintaan */
+        #login-overlay { 
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('a62068ec-917a-4201-ba97-d5dc828be7d4.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .student-card { transition: all 0.3s ease; border-left: 4px solid #d1d5db; }
+        .student-card.present { border-left-color: #10b981; background-color: #f0fdf4; }
+        .student-card.absent { border-left-color: #ef4444; background-color: #fef2f2; }
+        .student-card.permission { border-left-color: #f59e0b; background-color: #fffbeb; }
+        .student-card.sick { border-left-color: #6366f1; background-color: #f5f3ff; }
+
+        .tab-active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Halaman Login -->
+    <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md p-8 text-center animate-fade">
+            <!-- Logo Bagian Atas Login -->
+            <img src="logo kosong.png" alt="Logo SMK Bina Mandiri" class="h-24 mx-auto mb-4 drop-shadow-md">
+            
+            <h1 class="text-2xl font-bold text-gray-800">SMK Bina Mandiri</h1>
+            <p class="text-gray-500 text-sm mb-8">Sistem Presensi Kehadiran Digital</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase ml-1 mb-1">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="admin / guru" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase ml-1 mb-1">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-lg transform active:scale-95">Masuk Sistem</button>
+            </form>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden font-medium">Username atau password salah!</p>
+        </div>
+    </div>
+
+    <!-- Konten Utama Aplikasi -->
+    <div id="main-app" class="hidden">
+        <header class="bg-blue-800 text-white shadow-xl sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <img src="logo kosong.png" class="h-10 brightness-200" alt="Logo">
+                    <div>
+                        <h1 class="text-lg font-bold leading-none">SMK Bina Mandiri</h1>
+                        <p class="text-[10px] opacity-80 mt-1 uppercase tracking-wider">Presensi Real-time</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="bg-white/10 px-4 py-1.5 rounded-lg text-center backdrop-blur-md">
+                        <div id="current-date" class="text-[9px] font-medium uppercase opacity-80"></div>
+                        <div id="current-time" class="text-lg font-bold"></div>
+                    </div>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition">Keluar</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <!-- Informasi Jam & Statistik -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-4">Jadwal Operasional</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Jam Masuk</span>
+                            <span class="font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full text-sm">07:30</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Jam Pulang</span>
+                            <span class="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full text-sm">14:05</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-dashed">
+                            <span class="text-gray-600 text-xs italic">Sistem Reset</span>
+                            <span class="font-bold text-red-600 text-xs">Setiap 15:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Hadir</span>
+                        <span class="text-3xl font-bold text-green-600" id="stat-present">0</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Izin</span>
+                        <span class="text-3xl font-bold text-yellow-500" id="stat-permission">0</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Sakit</span>
+                        <span class="text-3xl font-bold text-indigo-500" id="stat-sick">0</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Alpa</span>
+                        <span class="text-3xl font-bold text-red-500" id="stat-absent">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Daftar Kehadiran -->
+                <div class="lg:w-2/3">
+                    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+                        <div class="p-6 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="flex gap-6 text-sm" id="view-tabs">
+                                <button class="pb-2 tab-active transition" data-view="siswa">Siswa</button>
+                                <button class="pb-2 text-gray-400 hover:text-gray-600 transition" data-view="guru">Guru</button>
+                            </div>
+                            <input type="text" id="search-box" placeholder="Cari nama..." class="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-64 text-sm">
+                        </div>
+
+                        <div id="list-container" class="p-4 space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
+                            <!-- Data dimuat di sini oleh JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Aksi & Log -->
+                <div class="lg:w-1/3 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-md">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Ekspor Data
+                        </h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="btn-excel" class="bg-green-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-green-700 transition">EXCEL</button>
+                            <button id="btn-pdf" class="bg-red-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-red-700 transition">PDF</button>
+                        </div>
+                    </div>
+
+                    <div id="admin-panel" class="bg-white p-6 rounded-2xl shadow-md border-2 border-red-50 hidden">
+                        <h3 class="font-bold text-red-600 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                            Menu Administrator
+                        </h3>
+                        <button id="btn-reset-manual" class="w-full bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl text-xs font-bold hover:bg-red-100 transition">RESET DATA SEKARANG</button>
+                        <p class="text-[10px] text-gray-400 mt-2 italic text-center">Reset manual akan menghapus seluruh status kehadiran hari ini.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-md">
+                        <h3 class="font-bold text-gray-800 mb-4">Aktivitas Terakhir</h3>
+                        <div id="activity-log" class="space-y-3 max-h-[300px] overflow-y-auto text-[11px] pr-2">
+                            <p class="text-gray-400 italic">Belum ada aktivitas tercatat.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Konfigurasi Jam
+        const TIME_IN = "07:30";
+        const TIME_OUT = "14:05";
+        const RESET_HOUR = 15;
+        const RESET_MINUTE = 0;
+
+        // Kredensial
+        const USERS = {
+            'admin': { password: 'admin123', role: 'admin', name: 'Administrator' },
+            'guru': { password: 'guru123', role: 'guru', name: 'Guru Piket' }
+        };
+
+        // Data Siswa Terbaru
+        const INITIAL_STUDENTS = [
+            { name: "Anwar Heriyansyah", gender: "L" }, { name: "Dila Mey Siska", gender: "P" },
+            { name: "Muhammad Oki Cesa", gender: "L" }, { name: "Novitasari", gender: "P" },
+            { name: "Rofi Michael Yusuf", gender: "L" }, { name: "Zaiyan Izhan Idlan", gender: "L" },
+            { name: "Fina Ramadhani", gender: "P" }, { name: "M. Fahri Novian", gender: "L" },
+            { name: "Andika", gender: "L" }, { name: "Dafa Nofa Erlangga", gender: "L" },
+            { name: "Fahri Maulana", gender: "L" }, { name: "Faujiah Sulaesih", gender: "P" },
+            { name: "Kenzie Raditya Osas", gender: "L" }, { name: "Siti Amelia", gender: "P" },
+            { name: "Tesa Lonika Saufani", gender: "P" }, { name: "Theresia Yunita Jadi", gender: "P" },
+            { name: "Fita Bunga", gender: "P" }, { name: "Rivky Jesen P", gender: "L" },
+            { name: "Alvin Putra Pratama", gender: "L" }, { name: "Arya Dimas Pratama", gender: "L" },
+            { name: "Cornelius Rowen N", gender: "L" }, { name: "Devi Afriyanti", gender: "P" },
+            { name: "Elti Julianti Anthoneta B", gender: "P" }, { name: "Fitria Sari Gozali", gender: "P" },
+            { name: "Leni Nur'aini", gender: "P" }, { name: "Muhammad Raihan", gender: "L" },
+            { name: "Parasha Hapizah Asipa", gender: "P" }, { name: "Raihan Ardiansyah", gender: "L" }
+        ].map((s, i) => ({ id: `s-${i}`, ...s, status: '', in: null, out: null, late: null, early: null, type: 'siswa' }));
+
+        // Data Guru
+        const INITIAL_GURU = [
+            { id: 'g-1', name: "Drs. Budi Santoso", gender: "L", status: '', in: null, out: null, type: 'guru' },
+            { id: 'g-2', name: "Siti Aminah, S.Pd", gender: "P", status: '', in: null, out: null, type: 'guru' },
+            { id: 'g-3', name: "Andi Wijaya, M.Kom", gender: "L", status: '', in: null, out: null, type: 'guru' }
+        ];
+
+        let state = {
+            currentUser: null,
+            data: [],
+            logs: [],
+            lastResetDate: '',
+            currentView: 'siswa'
+        };
+
+        // Inisialisasi
+        function init() {
+            const saved = localStorage.getItem('bm_absensi_v3');
+            if (saved) {
+                state = JSON.parse(saved);
+            } else {
+                state.data = [...INITIAL_STUDENTS, ...INITIAL_GURU];
+                state.lastResetDate = new Date().toDateString();
+            }
+
+            checkSystemReset();
+            setInterval(checkSystemReset, 30000); // Cek setiap 30 detik
+            setInterval(updateClock, 1000);
+            updateClock();
+            
+            if (state.currentUser) {
+                showMainApp();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('bm_absensi_v3', JSON.stringify(state));
+        }
+
+        // Sistem Reset 15.00
+        function checkSystemReset() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+
+            // Reset otomatis jika sudah melewati jam 15.00 hari ini dan belum direset
+            if (state.lastResetDate !== todayStr && hour >= RESET_HOUR && minute >= RESET_MINUTE) {
+                performReset();
+                state.lastResetDate = todayStr;
+                addLog("SISTEM", "Sistem telah melakukan reset harian otomatis pada jam 15.00.");
+                saveState();
+                renderAll();
+            }
+        }
+
+        function performReset() {
+            state.data = state.data.map(item => ({
+                ...item,
+                status: '',
+                in: null,
+                out: null,
+                late: null,
+                early: null
+            }));
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Logic Kehadiran
+        window.markStatus = (id, status) => {
+            const item = state.data.find(x => x.id === id);
+            if (!item) return;
+            
+            item.status = status;
+            const labels = { present: 'HADIR', permission: 'IZIN', sick: 'SAKIT', absent: 'ALPA' };
+            addLog(state.currentUser.name, `Mengubah status ${item.name} menjadi ${labels[status]}`);
+            
+            saveState();
+            renderAll();
+        };
+
+        window.doCheckIn = (id) => {
+            const item = state.data.find(x => x.id === id);
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
+            item.in = timeStr;
+            item.status = 'present';
+
+            // Hitung Keterlambatan
+            const [hLim, mLim] = TIME_IN.split(':').map(Number);
+            const diff = (now.getHours() * 60 + now.getMinutes()) - (hLim * 60 + mLim);
+            if (diff > 0) item.late = `${diff}m`;
+
+            addLog(state.currentUser.name, `${item.name} Masuk pada jam ${timeStr}`);
+            saveState();
+            renderAll();
+        };
+
+        window.doCheckOut = (id) => {
+            const item = state.data.find(x => x.id === id);
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
+            item.out = timeStr;
+
+            // Hitung Pulang Cepat
+            const [hLim, mLim] = TIME_OUT.split(':').map(Number);
+            const diff = (hLim * 60 + mLim) - (now.getHours() * 60 + now.getMinutes());
+            if (diff > 0) item.early = `${diff}m`;
+
+            addLog(state.currentUser.name, `${item.name} Pulang pada jam ${timeStr}`);
+            saveState();
+            renderAll();
+        };
+
+        // Render UI
+        function renderAll() {
+            renderList();
+            renderStats();
+            renderLogs();
+        }
+
+        function renderList() {
+            const container = document.getElementById('list-container');
+            const search = document.getElementById('search-box').value.toLowerCase();
+            container.innerHTML = '';
+
+            const filtered = state.data.filter(item => 
+                item.type === state.currentView && 
+                item.name.toLowerCase().includes(search)
+            );
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `student-card p-4 rounded-xl glass-card shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 animate-fade ${item.status}`;
+                
+                const lateBadge = item.late ? `<span class="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold ml-1">Terlambat ${item.late}</span>` : '';
+                const earlyBadge = item.early ? `<span class="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold ml-1">P. Cepat ${item.early}</span>` : '';
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 w-full md:w-auto">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                            ${item.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800">${item.name}</h4>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">
+                                ${item.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <div class="flex bg-gray-100 p-1 rounded-lg">
+                            <button onclick="markStatus('${item.id}', 'present')" class="px-2 py-1 text-[9px] font-bold rounded ${item.status === 'present' ? 'bg-white shadow text-green-600' : 'text-gray-400'}">HADIR</button>
+                            <button onclick="markStatus('${item.id}', 'permission')" class="px-2 py-1 text-[9px] font-bold rounded ${item.status === 'permission' ? 'bg-white shadow text-yellow-600' : 'text-gray-400'}">IZIN</button>
+                            <button onclick="markStatus('${item.id}', 'sick')" class="px-2 py-1 text-[9px] font-bold rounded ${item.status === 'sick' ? 'bg-white shadow text-indigo-600' : 'text-gray-400'}">SAKIT</button>
+                            <button onclick="markStatus('${item.id}', 'absent')" class="px-2 py-1 text-[9px] font-bold rounded ${item.status === 'absent' ? 'bg-white shadow text-red-600' : 'text-gray-400'}">ALPA</button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="doCheckIn('${item.id}')" ${item.in ? 'disabled' : ''} class="px-3 py-1.5 border rounded-lg text-[10px] font-bold hover:bg-white disabled:opacity-50">
+                                ${item.in || 'MASUK'} ${lateBadge}
+                            </button>
+                            <button onclick="doCheckOut('${item.id}')" ${!item.in || item.out ? 'disabled' : ''} class="px-3 py-1.5 border rounded-lg text-[10px] font-bold hover:bg-white disabled:opacity-50">
+                                ${item.out || 'PULANG'} ${earlyBadge}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderStats() {
+            const list = state.data.filter(x => x.type === 'siswa');
+            document.getElementById('stat-present').textContent = list.filter(s => s.status === 'present').length;
+            document.getElementById('stat-permission').textContent = list.filter(s => s.status === 'permission').length;
+            document.getElementById('stat-sick').textContent = list.filter(s => s.status === 'sick').length;
+            document.getElementById('stat-absent').textContent = list.filter(s => s.status === 'absent').length;
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('activity-log');
+            if (state.logs.length === 0) return;
+            container.innerHTML = state.logs.map(l => `
+                <div class="bg-gray-50 p-2 rounded border-l-2 border-blue-400">
+                    <span class="text-[8px] font-bold text-gray-400">${l.time}</span>
+                    <p><span class="font-bold text-blue-700">${l.user}:</span> ${l.msg}</p>
+                </div>
+            `).join('');
+        }
+
+        function addLog(user, msg) {
+            state.logs.unshift({ time: new Date().toLocaleTimeString('id-ID'), user, msg });
+            if (state.logs.length > 50) state.logs.pop();
+        }
+
+        // UI Handlers
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value.toLowerCase();
+            const p = document.getElementById('password').value;
+
+            if (USERS[u] && USERS[u].password === p) {
+                state.currentUser = USERS[u];
+                showMainApp();
+                addLog('SISTEM', `Berhasil login sebagai ${u}`);
+                saveState();
+            } else {
+                const err = document.getElementById('login-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
+            }
+        });
+
+        function showMainApp() {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            if (state.currentUser.role === 'admin') {
+                document.getElementById('admin-panel').classList.remove('hidden');
+            }
+            renderAll();
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            state.currentUser = null;
+            saveState();
+            location.reload();
+        });
+
+        document.querySelectorAll('#view-tabs button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#view-tabs button').forEach(b => {
+                    b.classList.remove('tab-active');
+                    b.classList.add('text-gray-400');
+                });
+                this.classList.add('tab-active');
+                this.classList.remove('text-gray-400');
+                state.currentView = this.dataset.view;
+                renderList();
+            });
+        });
+
+        document.getElementById('search-box').addEventListener('input', renderList);
+
+        document.getElementById('btn-reset-manual').addEventListener('click', () => {
+            if (confirm('Yakin ingin mereset seluruh data absensi hari ini secara manual?')) {
+                performReset();
+                addLog(state.currentUser.name, "Melakukan RESET MANUAL seluruh data harian.");
+                saveState();
+                renderAll();
+            }
+        });
+
+        // Ekspor
+        document.getElementById('btn-excel').addEventListener('click', () => {
+            const rows = state.data.map(item => ({
+                'Kategori': item.type.toUpperCase(),
+                'Nama': item.name,
+                'L/P': item.gender,
+                'Status': item.status || 'BELUM ABSEN',
+                'Jam Masuk': item.in || '-',
+                'Terlambat': item.late || '-',
+                'Jam Pulang': item.out || '-',
+                'Pulang Cepat': item.early || '-'
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Absensi_BM");
+            XLSX.writeFile(wb, `Rekap_Absensi_BM_${new Date().toLocaleDateString()}.xlsx`);
+        });
+
+        document.getElementById('btn-pdf').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`REKAPITULASI PRESENSI - SMK BINA MANDIRI`, 105, 10, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 105, 16, { align: 'center' });
+            
+            const rows = state.data.map((item, i) => [
+                i + 1, item.name, item.type.toUpperCase(), item.status || '-', item.in || '-', item.out || '-'
+            ]);
+            
+            doc.autoTable({
+                head: [['No', 'Nama', 'Tipe', 'Status', 'Masuk', 'Pulang']],
+                body: rows,
+                startY: 25
+            });
+            doc.save(`Presensi_BM_${new Date().toLocaleDateString()}.pdf`);
+        });
+
+        init();
+    </script>
+</body>
+</html>
