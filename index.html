@@ -3,488 +3,527 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Presensi SMK Bina Mandiri</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>E-Absensi SMK Bina Mandiri</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
-        body { font-family: "Poppins", sans-serif; background-color: #f8fafc; }
+        body { font-family: "Poppins", sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
         
-        /* Background Login dengan foto gedung */
-        #login-overlay { 
-            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), 
+        .bg-login { 
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
                         url('a62068ec-917a-4201-ba97-d5dc828be7d4.jpg');
             background-size: cover;
             background-position: center;
-            backdrop-filter: blur(4px);
+            background-attachment: fixed;
         }
 
-        .student-card { transition: all 0.3s ease; border-left: 5px solid #e2e8f0; }
-        .student-card.present { border-left-color: #10b981; background-color: #f0fdf4; }
-        .student-card.absent { border-left-color: #ef4444; background-color: #fef2f2; }
-        .student-card.permission { border-left-color: #f59e0b; background-color: #fffbeb; }
-        .student-card.sick { border-left-color: #6366f1; background-color: #eef2ff; }
-        
-        .tab.active { border-bottom: 3px solid #1d4ed8; color: #1d4ed8; font-weight: 600; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        @keyframes pulse-custom {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .animate-status { animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Login Page -->
-    <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/20">
-            <div class="text-center mb-8">
-                <!-- Logo Sekolah -->
-                <img src="logo.png" alt="Logo SMK Bina Mandiri" class="h-24 mx-auto mb-4 drop-shadow-md" onerror="this.src='https://via.placeholder.com/100?text=LOGO'">
-                <h1 class="text-2xl font-bold text-slate-800">SMK Bina Mandiri</h1>
-                <p class="text-slate-500 text-sm">Sistem Administrasi Absensi</p>
-            </div>
-            
-            <form id="login-form" class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Username Admin</label>
-                    <input type="text" id="username" class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="admin" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Password</label>
-                    <input type="password" id="password" class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition transform active:scale-95">
-                    Masuk Sekarang
-                </button>
-            </form>
-            <p id="login-error" class="text-red-500 text-sm mt-4 text-center hidden font-semibold">Akses ditolak! Periksa kembali data login Anda.</p>
-        </div>
-    </div>
-
-    <!-- Dashboard -->
-    <div id="main-app" class="hidden">
-        <header class="bg-white border-b border-slate-200 py-6 px-4 md:px-8 sticky top-0 z-50">
-            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <img src="logo.png" alt="Logo" class="h-12" onerror="this.style.display='none'">
-                    <div>
-                        <h1 class="text-xl font-bold text-slate-800">SMK Bina Mandiri</h1>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Admin Panel</span>
-                            <span class="text-[10px] text-slate-400 font-medium">Reset: 15:30</span>
-                        </div>
-                    </div>
-                </div>
+    <div id="app-container">
+        <!-- VIEW 1: PORTAL UTAMA -->
+        <div id="view-portal" class="bg-login fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-8 text-center fade-in">
+                <img src="logo.png" alt="Logo SMK Bina Mandiri" class="h-28 mx-auto mb-6 drop-shadow-lg">
+                <h1 class="text-2xl font-bold text-gray-800">SMK Bina Mandiri</h1>
+                <p class="text-gray-500 text-sm mb-8">Sistem Presensi Digital</p>
                 
-                <div class="flex items-center gap-3">
-                    <div class="text-right hidden sm:block">
-                        <div id="current-date" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"></div>
-                        <div id="current-time" class="text-xl font-bold text-blue-600"></div>
-                    </div>
-                    <button id="logout-btn" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 p-3 rounded-2xl transition duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                <div class="grid grid-cols-1 gap-4">
+                    <button onclick="navigateTo('attendance')" class="flex items-center justify-between bg-blue-700 text-white p-5 rounded-2xl font-bold hover:bg-blue-800 transition shadow-lg group">
+                        <span class="text-lg">Masuk Absensi Siswa</span>
+                        <svg class="h-6 w-6 group-hover:translate-x-2 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-width="2"/></svg>
+                    </button>
+                    <button onclick="navigateTo('login')" class="flex items-center justify-between bg-white text-gray-700 border-2 border-gray-100 p-5 rounded-2xl font-bold hover:bg-gray-50 transition shadow-sm">
+                        <span class="text-lg text-blue-700">Login Administrator</span>
+                        <svg class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-width="2"/></svg>
                     </button>
                 </div>
             </div>
-        </header>
+        </div>
 
-        <main class="container mx-auto px-4 md:px-8 py-8">
-            <!-- Stats -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                        <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        <!-- VIEW 2: HALALMAN ABSENSI SISWA -->
+        <div id="view-attendance" class="bg-login fixed inset-0 z-40 hidden flex items-center justify-center p-4">
+            <div class="glass rounded-3xl shadow-2xl w-full max-w-lg p-8 fade-in relative text-center">
+                <button onclick="navigateTo('portal')" class="absolute top-6 left-6 text-gray-400 hover:text-blue-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                </button>
+                
+                <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Presensi Mandiri Siswa</h2>
+                <p id="live-time-student" class="text-blue-600 font-bold text-2xl mt-2 mb-8">00:00:00</p>
+
+                <div id="attendance-form" class="space-y-5">
+                    <div class="text-left">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pilih Nama Lengkap</label>
+                        <select id="student-select" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition appearance-none cursor-pointer">
+                            <option value="">-- Cari Nama Anda --</option>
+                        </select>
                     </div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Siswa Hadir</p>
-                    <h3 class="text-3xl font-bold text-slate-800" id="stat-present">0</h3>
+
+                    <button onclick="submitAttendance()" class="w-full bg-blue-700 text-white py-5 rounded-2xl font-bold shadow-xl hover:bg-blue-800 transition transform active:scale-95 text-lg">KONFIRMASI ABSENSI</button>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center mb-4 text-red-500 font-bold">!</div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Alpa/Tanpa Ket</p>
-                    <h3 class="text-3xl font-bold text-slate-800" id="stat-absent">0</h3>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center mb-4 text-yellow-600 font-bold">i</div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Izin</p>
-                    <h3 class="text-3xl font-bold text-slate-800" id="stat-permission">0</h3>
-                </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center mb-4 text-indigo-600 font-bold">S</div>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Sakit</p>
-                    <h3 class="text-3xl font-bold text-slate-800" id="stat-sick">0</h3>
+                
+                <div id="attendance-success" class="hidden py-10">
+                    <div class="bg-green-100 text-green-700 p-6 rounded-2xl border border-green-200">
+                        <svg class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/></svg>
+                        <p class="font-bold text-lg">Absensi Berhasil!</p>
+                        <p class="text-sm">Anda akan dialihkan kembali dalam 3 detik...</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- List -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-8">
-                        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-50 pb-6">
-                            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                Daftar Siswa
-                                <span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full" id="count-total">28 Siswa</span>
-                            </h2>
-                            <div class="relative w-full sm:w-72">
-                                <input type="text" id="search-box" placeholder="Cari nama siswa..." class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+        <!-- VIEW 3: LOGIN ADMIN -->
+        <div id="view-login" class="bg-login fixed inset-0 z-40 hidden flex items-center justify-center p-4">
+            <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-10 text-center fade-in relative">
+                <button onclick="navigateTo('portal')" class="absolute top-6 left-6 text-gray-400">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
+                </button>
+                <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-8">Login Administrator</h2>
+                
+                <form id="login-form" class="space-y-4 text-left">
+                    <input type="password" id="admin-password" placeholder="Masukkan Password Admin" class="w-full px-5 py-4 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" required>
+                    <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-black transition active:scale-95">MASUK PANEL KONTROL</button>
+                </form>
+                <p id="login-error" class="text-red-500 text-xs mt-4 hidden font-bold italic">Password admin salah!</p>
+            </div>
+        </div>
+
+        <!-- VIEW 4: DASHBOARD ADMIN -->
+        <div id="view-admin" class="hidden min-h-screen">
+            <header class="bg-blue-900 text-white p-6 shadow-xl sticky top-0 z-50">
+                <div class="container mx-auto flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <img src="logo.png" class="h-10 bg-white p-1 rounded-lg">
+                        <div>
+                            <h1 class="font-bold text-lg leading-none">Admin SMK Bina Mandiri</h1>
+                            <p class="text-[10px] uppercase font-bold tracking-widest opacity-60">Dashboard Kendali</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <div id="live-time-admin" class="text-xl font-bold tabular-nums">00:00:00</div>
+                            <div id="live-date-admin" class="text-[9px] opacity-70 uppercase font-bold tracking-widest">Memuat...</div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 p-3 rounded-xl transition shadow-lg">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="container mx-auto p-4 md:p-8">
+                <!-- Nav Tabs -->
+                <div class="flex gap-6 border-b mb-8 overflow-x-auto">
+                    <button id="tab-btn-today" onclick="switchTab('today')" class="tab-active pb-2 text-sm font-bold transition">Absensi Hari Ini</button>
+                    <button id="tab-btn-history" onclick="switchTab('history')" class="text-gray-400 pb-2 text-sm font-bold transition hover:text-blue-600">Riwayat & Arsip</button>
+                    <button id="tab-btn-qris" onclick="switchTab('qris')" class="text-gray-400 pb-2 text-sm font-bold transition hover:text-blue-600">QRIS Kehadiran</button>
+                </div>
+
+                <!-- Tab: Today -->
+                <div id="tab-today" class="tab-content">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-green-500">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Hadir Tepat</p>
+                            <h3 id="stat-present" class="text-4xl font-black text-gray-800">0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-red-500">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Terlambat</p>
+                            <h3 id="stat-late" class="text-4xl font-black text-gray-800">0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-gray-200">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Belum Absen</p>
+                            <h3 id="stat-missing" class="text-4xl font-black text-gray-800">28</h3>
+                        </div>
+                        <div class="bg-blue-600 p-6 rounded-3xl shadow-sm text-white">
+                            <p class="text-blue-200 text-[10px] font-bold uppercase">Total Siswa</p>
+                            <h3 class="text-4xl font-black">28</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
+                        <div class="p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 border-b">
+                            <h2 class="font-bold text-gray-800">Pemantauan Presensi</h2>
+                            <div class="flex gap-2">
+                                <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">Ekspor Excel</button>
+                                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-700 transition">Ekspor PDF</button>
+                                <button onclick="manualReset()" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-200 transition">Reset Manual Hari Ini</button>
                             </div>
                         </div>
-
-                        <div id="list-container" class="space-y-4 max-h-[650px] overflow-y-auto pr-2 custom-scrollbar">
-                            <!-- JS Generated Cards -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-4">No</th>
+                                        <th class="px-6 py-4">Nama Siswa</th>
+                                        <th class="px-6 py-4">L/P</th>
+                                        <th class="px-6 py-4">Waktu</th>
+                                        <th class="px-6 py-4">Keterangan</th>
+                                        <th class="px-6 py-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-attendance-body" class="divide-y divide-gray-100 text-sm">
+                                    <!-- Rendered by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Controls -->
-                <div class="space-y-6">
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
-                        <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                            </svg>
-                            Opsi Laporan
-                        </h3>
-                        <div class="space-y-4">
-                            <button id="export-excel" class="w-full flex items-center justify-between bg-emerald-50 text-emerald-700 p-4 rounded-2xl hover:bg-emerald-100 transition font-bold text-sm">
-                                <span>Export ke Excel (.xlsx)</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </button>
-                            <button id="export-pdf" class="w-full flex items-center justify-between bg-rose-50 text-rose-700 p-4 rounded-2xl hover:bg-rose-100 transition font-bold text-sm">
-                                <span>Cetak Laporan (PDF)</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                            </button>
+                <!-- Tab: History -->
+                <div id="tab-history" class="tab-content hidden">
+                    <div class="bg-white rounded-3xl shadow-sm p-8">
+                        <h2 class="font-bold text-xl text-gray-800 mb-8">Arsip Riwayat Harian</h2>
+                        <div id="history-list" class="space-y-4">
+                            <div class="text-center py-20 text-gray-400 italic">Belum ada riwayat tersimpan. Riwayat disimpan otomatis setiap jam 15:00.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: QRIS -->
+                <div id="tab-qris" class="tab-content hidden">
+                    <div class="bg-white rounded-3xl shadow-sm p-10 max-w-xl mx-auto text-center border-2 border-blue-50">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">QRIS Presensi Massal</h2>
+                        <p id="qris-date-label" class="text-sm font-bold text-blue-500 uppercase tracking-widest mb-10">Memuat Tanggal...</p>
+                        
+                        <div class="bg-white p-6 rounded-3xl shadow-inner border border-gray-50 mb-10 inline-block">
+                            <img src="download.jpg" alt="QRIS Absensi" class="h-64 mx-auto rounded-lg shadow-md">
                         </div>
                         
-                        <div class="mt-8 pt-8 border-t border-slate-50">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Bahaya / Reset</p>
-                            <button id="force-reset" class="w-full bg-slate-50 text-slate-400 border border-slate-100 py-3 rounded-2xl hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 text-xs font-bold uppercase tracking-widest">Reset Seluruh Data Hari Ini</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 overflow-hidden">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4">Riwayat Log</h3>
-                        <div id="activity-log" class="space-y-4 max-h-[350px] overflow-y-auto text-xs custom-scrollbar pr-2">
-                            <p class="text-slate-400 italic">Memuat log...</p>
-                        </div>
+                        <p class="text-sm text-gray-500 italic max-w-xs mx-auto">Tampilkan gambar ini kepada siswa untuk proses absensi mandiri di halaman depan.</p>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <script>
-        // --- KONFIGURASI ---
-        const SCHOOL_NAME = "SMK Bina Mandiri";
-        const ADMIN_CRED = { user: "admin", pass: "admin123" };
-        const TIME_IN = "07:30";
-        const LATE_START = "07:40"; // Masuk 07:30 + toleransi 10 menit
-        const TIME_OUT = "14:05";
-        const RESET_TIME = "15:30";
-
-        // --- DATA SISWA TERBARU ---
-        const RAW_STUDENTS = [
-            ["Anwar Heriyansyah", "L"], ["Dila Mey Siska", "P"], ["Muhammad Oki Cesa", "L"],
-            ["Novitasari", "P"], ["Rofi Michael Yusuf", "L"], ["Zaiyan Izhan Idlan", "L"],
-            ["Fina Ramadhani", "P"], ["M. Fahri Novian", "L"], ["Andika", "L"],
-            ["Dafa Nofa Erlangga", "L"], ["Fahri Maulana", "L"], ["Faujiah Sulaesih", "P"],
-            ["Kenzie Raditya Osas", "L"], ["Siti Amelia", "P"], ["Tesa Lonika Saufani", "P"],
-            ["Theresia Yunita Jadi", "P"], ["Fita Bunga", "P"], ["Rivky Jesen P", "L"],
-            ["Alvin Putra Pratama", "L"], ["Arya Dimas Pratama", "L"], ["Cornelius Rowen N", "L"],
-            ["Devi Afriyanti", "P"], ["Elti Julianti Anthoneta B", "P"], ["Fitria Sari Gozali", "P"],
-            ["Leni Nur'aini", "P"], ["Muhammad Raihan", "L"], ["Parasha Hapizah Asipa", "P"],
-            ["Raihan Ardiansyah", "L"]
+        // DATA SISWA MASTER (28 Siswa)
+        const MASTER_STUDENTS = [
+            ["Anwar Heriyansyah", "Laki Laki"], ["Dila Mey Siska", "Perempuan"], ["Muhammad Oki Cesa", "Laki Laki"],
+            ["Novitasari", "Perempuan"], ["Rofi Michael Yusuf", "Laki Laki"], ["Zaiyan Izhan Idlan", "Laki Laki"],
+            ["Fina Ramadhani", "Perempuan"], ["M. Fahri Novian", "Laki Laki"], ["Andika", "Laki Laki"],
+            ["Dafa Nofa Erlangga", "Laki Laki"], ["Fahri Maulana", "Laki Laki"], ["Faujiah Sulaesih", "Perempuan"],
+            ["Kenzie Raditya Osas", "Laki Laki"], ["Siti Amelia", "Perempuan"], ["Tesa Lonika Saufani", "Perempuan"],
+            ["Theresia Yunita Jadi", "Perempuan"], ["Fita Bunga", "Perempuan"], ["Rivky Jesen P", "Laki Laki"],
+            ["Alvin Putra Pratama", "Laki Laki"], ["Arya Dimas Pratama", "Laki Laki"], ["Cornelius Rowen N", "Laki Laki"],
+            ["Devi Afriyanti", "Perempuan"], ["Elti Julianti Anthoneta B", "Perempuan"], ["Fitria Sari Gozali", "Perempuan"],
+            ["Leni Nur'aini", "Perempuan"], ["Muhammad Raihan", "Laki Laki"], ["Parasha Hapizah Asipa", "Perempuan"],
+            ["Raihan Ardiansyah", "Laki Laki"]
         ];
 
-        let state = {
-            isAdmin: false,
-            students: [],
-            logs: [],
-            lastReset: ''
+        const CONFIG = {
+            adminPass: "admin123",
+            resetTime: "15:00:00",
+            entryStart: "07:30",
+            lateTolerance: 10, // Menit (Sampai 07:40 Oke, 07:41 Telat)
+            homeMonThu: "14:05",
+            homeFri: "11:00"
         };
 
-        // --- CORE LOGIC ---
+        let state = {
+            view: 'portal',
+            lastResetDate: '',
+            todayData: [],
+            history: []
+        };
+
+        // INITIALIZATION
         function init() {
-            const saved = localStorage.getItem('bm_v3_state');
+            const saved = localStorage.getItem('smk_bm_db_v3');
             if (saved) {
-                state = { ...state, ...JSON.parse(saved) };
+                state = JSON.parse(saved);
             } else {
-                state.students = RAW_STUDENTS.map((s, i) => ({
-                    id: `s${i}`, name: s[0], gender: s[1], status: '', checkIn: null, checkOut: null, late: null, early: null
-                }));
+                initNewDay();
             }
-            
-            checkAutoReset();
-            setInterval(updateClock, 1000);
-            updateClock();
-            
-            if(state.isAdmin) {
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                renderAll();
-            }
+
+            checkResetTime();
+            updateClocks();
+            setInterval(updateClocks, 1000);
+            renderView();
+            populateStudentSelect();
         }
 
         function save() {
-            localStorage.setItem('bm_v3_state', JSON.stringify(state));
+            localStorage.setItem('smk_bm_db_v3', JSON.stringify(state));
         }
 
-        function checkAutoReset() {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0];
-            const currentH = now.getHours();
-            const currentM = now.getMinutes();
-            const [resetH, resetM] = RESET_TIME.split(':').map(Number);
+        function initNewDay() {
+            state.todayData = MASTER_STUDENTS.map((s, i) => ({
+                id: i, name: s[0], gender: s[1], status: '', time: null, isLate: false
+            }));
+            state.lastResetDate = new Date().toDateString();
+            save();
+        }
 
-            // Trigger reset jika waktu sekarang >= reset_time dan belum direset hari ini
-            if (state.lastReset !== today && (currentH > resetH || (currentH === resetH && currentM >= resetM))) {
-                performReset("Sistem (Auto-Reset 15:30)");
-                state.lastReset = today;
-                save();
+        // NAVIGATION
+        function navigateTo(target) {
+            state.view = target;
+            renderView();
+        }
+
+        function renderView() {
+            const views = ['portal', 'attendance', 'login', 'admin'];
+            views.forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+            
+            const current = document.getElementById(`view-${state.view}`);
+            if (current) current.classList.remove('hidden');
+
+            if (state.view === 'attendance') {
+                document.getElementById('attendance-form').classList.remove('hidden');
+                document.getElementById('attendance-success').classList.add('hidden');
+                populateStudentSelect();
+            }
+            
+            if (state.view === 'admin') renderAdmin();
+        }
+
+        // TIME & RESET LOGIC
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            if (document.getElementById('live-time-student')) document.getElementById('live-time-student').textContent = timeStr;
+            if (document.getElementById('live-time-admin')) document.getElementById('live-time-admin').textContent = timeStr;
+            if (document.getElementById('live-date-admin')) document.getElementById('live-date-admin').textContent = dateStr;
+            if (document.getElementById('qris-date-label')) document.getElementById('qris-date-label').textContent = dateStr;
+
+            if (timeStr === CONFIG.resetTime) autoArchiveAndReset();
+        }
+
+        function checkResetTime() {
+            const today = new Date().toDateString();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+
+            // Jika hari berganti ATAU sudah lewat jam 15:00 hari ini tapi belum direset
+            if (state.lastResetDate !== today || (timeStr >= CONFIG.resetTime && state.lastResetDate === today)) {
+                autoArchiveAndReset();
             }
         }
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('current-time').textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        function autoArchiveAndReset() {
+            const today = new Date().toDateString();
             
-            // Check auto reset every minute
-            if (now.getSeconds() === 0) checkAutoReset();
-        }
+            // Masukkan ke riwayat jika ada data
+            if (state.todayData.some(s => s.status)) {
+                state.history.unshift({
+                    date: today + (new Date().getHours() >= 15 ? ' (15:00 Reset)' : ''),
+                    data: JSON.parse(JSON.stringify(state.todayData))
+                });
+                if (state.history.length > 30) state.history.pop();
+            }
 
-        function performReset(by) {
-            state.students = state.students.map(s => ({ ...s, status: '', checkIn: null, checkOut: null, late: null, early: null }));
-            addLog(`Seluruh data absensi hari ini direset oleh ${by}.`);
+            initNewDay();
+            state.lastResetDate = today + "_reset"; // Flag agar tidak looping reset dalam satu detik
             save();
-            renderAll();
+            if (state.view === 'admin') renderAdmin();
         }
 
-        function renderAll() {
-            renderList();
-            renderStats();
-            renderLogs();
-        }
-
-        function renderList() {
-            const container = document.getElementById('list-container');
-            const search = document.getElementById('search-box').value.toLowerCase();
-            container.innerHTML = '';
-
-            const filtered = state.students.filter(item => item.name.toLowerCase().includes(search));
-
-            filtered.forEach(s => {
-                const card = document.createElement('div');
-                card.className = `student-card p-5 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row items-center gap-5 ${s.status}`;
-                
-                const lateTag = s.late ? `<span class="bg-red-50 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Terlambat ${s.late}</span>` : '';
-                const earlyTag = s.early ? `<span class="bg-orange-50 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Pulang Cepat ${s.early}</span>` : '';
-
-                card.innerHTML = `
-                    <div class="flex items-center gap-4 flex-1 w-full">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-50 text-blue-600 flex items-center justify-center font-bold text-lg border border-slate-100 shadow-inner">
-                            ${s.name.charAt(0)}
-                        </div>
-                        <div class="overflow-hidden">
-                            <h4 class="text-sm font-bold text-slate-800 truncate">${s.name}</h4>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
-                                ${lateTag} ${earlyTag}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-wrap items-center gap-3 justify-center w-full md:w-auto">
-                        <div class="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                            ${['H', 'I', 'S', 'A'].map(btn => {
-                                const map = { 'H': 'present', 'I': 'permission', 'S': 'sick', 'A': 'absent' };
-                                const label = { 'H': 'Hadir', 'I': 'Izin', 'S': 'Sakit', 'A': 'Alpa' };
-                                const stKey = map[btn];
-                                const activeClass = s.status === stKey ? 'bg-white shadow-md text-blue-600 ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600';
-                                return `<button onclick="updateStatus('${s.id}', '${stKey}')" class="w-10 h-10 text-xs font-black rounded-lg transition-all ${activeClass}">${btn}</button>`;
-                            }).join('')}
-                        </div>
-                        
-                        <div class="flex gap-2">
-                            <button onclick="checkIn('${s.id}')" ${s.checkIn ? 'disabled' : ''} class="px-4 py-2 border rounded-xl text-[10px] font-bold transition ${s.checkIn ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white border-slate-200 hover:bg-blue-50 hover:border-blue-200 text-slate-700'}">
-                                ${s.checkIn ? 'IN: ' + s.checkIn : 'MASUK'}
-                            </button>
-                            <button onclick="checkOut('${s.id}')" ${!s.checkIn || s.checkOut ? 'disabled' : ''} class="px-4 py-2 border rounded-xl text-[10px] font-bold transition ${!s.checkIn || s.checkOut ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white border-slate-200 hover:bg-orange-50 hover:border-orange-200 text-slate-700'}">
-                                ${s.checkOut ? 'OUT: ' + s.checkOut : 'PULANG'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
+        // STUDENT ATTENDANCE
+        function populateStudentSelect() {
+            const select = document.getElementById('student-select');
+            select.innerHTML = '<option value="">-- Cari Nama Anda --</option>';
+            
+            // Hanya tampilkan siswa yang BELUM absen
+            const available = [...state.todayData].sort((a,b) => a.name.localeCompare(b.name));
+            available.forEach(s => {
+                if (!s.status) {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                }
             });
-            document.getElementById('count-total').textContent = `${state.students.length} Siswa`;
         }
 
-        function renderStats() {
-            const list = state.students;
-            document.getElementById('stat-present').textContent = list.filter(s => s.status === 'present').length;
-            document.getElementById('stat-absent').textContent = list.filter(s => s.status === 'absent').length;
-            document.getElementById('stat-permission').textContent = list.filter(s => s.status === 'permission').length;
-            document.getElementById('stat-sick').textContent = list.filter(s => s.status === 'sick').length;
-        }
-
-        function renderLogs() {
-            const container = document.getElementById('activity-log');
-            if (state.logs.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 italic text-center py-4">Belum ada riwayat aktivitas hari ini.</p>';
+        function submitAttendance() {
+            const studentId = document.getElementById('student-select').value;
+            if (!studentId) {
+                alert("Silakan pilih nama Anda terlebih dahulu.");
                 return;
             }
-            container.innerHTML = state.logs.map(l => `
-                <div class="border-l-2 border-slate-200 pl-4 py-2 relative">
-                    <div class="absolute -left-[5px] top-3 w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span class="text-[10px] font-bold text-blue-500 block mb-1">${l.time}</span>
-                    <p class="text-slate-600 leading-relaxed">${l.msg}</p>
-                </div>
-            `).join('');
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            // Logika Terlambat (07:30 + 10 menit = 07:40)
+            const [h, m] = timeStr.split(':').map(Number);
+            const isLate = (h > 7) || (h === 7 && m > (30 + CONFIG.lateTolerance));
+
+            const student = state.todayData.find(s => s.id == studentId);
+            student.status = 'hadir';
+            student.time = timeStr;
+            student.isLate = isLate;
+
+            save();
+
+            document.getElementById('attendance-form').classList.add('hidden');
+            document.getElementById('attendance-success').classList.remove('hidden');
+
+            // Keluar otomatis setelah 3 detik
+            setTimeout(() => {
+                navigateTo('portal');
+            }, 3000);
         }
 
-        // --- ACTIONS ---
-        window.updateStatus = (id, status) => {
-            const s = state.students.find(x => x.id === id);
-            const labels = { present: 'Hadir', permission: 'Izin', sick: 'Sakit', absent: 'Alpa' };
-            s.status = status;
-            addLog(`Admin mengubah status **${s.name}** menjadi **${labels[status]}**.`);
-            save();
-            renderAll();
-        };
-
-        window.checkIn = (id) => {
-            const s = state.students.find(x => x.id === id);
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            
-            s.checkIn = timeStr;
-            s.status = 'present';
-
-            // Hitung Terlambat (Target 07:30, Toleransi s/d 07:40)
-            const [hLim, mLim] = LATE_START.split(':').map(Number);
-            const diff = (now.getHours() * 60 + now.getMinutes()) - (hLim * 60 + mLim);
-            if (diff > 0) s.late = `${diff} mnt`;
-
-            addLog(`**${s.name}** Masuk pada pukul ${timeStr}${s.late ? ' (Terlambat ' + s.late + ')' : ''}.`);
-            save();
-            renderAll();
-        };
-
-        window.checkOut = (id) => {
-            const s = state.students.find(x => x.id === id);
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            
-            s.checkOut = timeStr;
-
-            // Hitung Pulang Cepat (Target 14:05)
-            const [hLim, mLim] = TIME_OUT.split(':').map(Number);
-            const diff = (hLim * 60 + mLim) - (now.getHours() * 60 + now.getMinutes());
-            if (diff > 0) s.early = `${diff} mnt`;
-
-            addLog(`**${s.name}** Pulang pada pukul ${timeStr}${s.early ? ' (Pulang Cepat ' + s.early + ')' : ''}.`);
-            save();
-            renderAll();
-        };
-
-        function addLog(msg) {
-            state.logs.unshift({
-                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                msg
-            });
-            if (state.logs.length > 50) state.logs.pop();
-        }
-
-        // --- UI BINDINGS ---
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        // ADMIN LOGIC
+        document.getElementById('login-form').onsubmit = function(e) {
             e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-
-            if (u === ADMIN_CRED.user && p === ADMIN_CRED.pass) {
-                state.isAdmin = true;
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                addLog('Admin login ke sistem.');
-                save();
-                renderAll();
+            const pass = document.getElementById('admin-password').value;
+            if (pass === CONFIG.adminPass) {
+                navigateTo('admin');
+                document.getElementById('admin-password').value = "";
             } else {
                 const err = document.getElementById('login-error');
                 err.classList.remove('hidden');
                 setTimeout(() => err.classList.add('hidden'), 3000);
             }
-        });
+        };
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            state.isAdmin = false;
-            save();
-            location.reload();
-        });
+        function logout() { navigateTo('portal'); }
 
-        document.getElementById('search-box').addEventListener('input', renderList);
+        function switchTab(target) {
+            ['today', 'history', 'qris'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-btn-${t}`).classList.add('text-gray-400');
+            });
+            document.getElementById(`tab-${target}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${target}`).classList.add('tab-active');
+            document.getElementById(`tab-btn-${target}`).classList.remove('text-gray-400');
+        }
 
-        document.getElementById('force-reset').addEventListener('click', () => {
-            if(confirm('PERINGATAN: Seluruh data kehadiran siswa hari ini akan dihapus permanen. Lanjutkan?')) {
-                performReset("Admin (Manual Reset)");
+        function renderAdmin() {
+            const body = document.getElementById('table-attendance-body');
+            body.innerHTML = '';
+            
+            let present = 0, late = 0;
+            state.todayData.forEach((s, i) => {
+                if (s.status) {
+                    present++;
+                    if (s.isLate) late++;
+                }
+
+                const row = document.createElement('tr');
+                const statusTag = s.status 
+                    ? `<span class="px-3 py-1 rounded-full font-bold text-[10px] ${s.isLate ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${s.isLate ? 'TERLAMBAT' : 'HADIR'}</span>`
+                    : `<span class="px-3 py-1 rounded-full font-bold text-[10px] bg-gray-100 text-gray-400">ALPA</span>`;
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-gray-400">${i + 1}</td>
+                    <td class="px-6 py-4 font-bold text-gray-800">${s.name}</td>
+                    <td class="px-6 py-4 text-gray-500 font-medium">${s.gender === 'Laki Laki' ? 'L' : 'P'}</td>
+                    <td class="px-6 py-4 font-bold text-blue-800">${s.time || '--:--'}</td>
+                    <td class="px-6 py-4">${statusTag}</td>
+                    <td class="px-6 py-4 text-center">
+                        ${s.status ? `<button onclick="resetSiswa(${s.id})" class="text-red-400 hover:text-red-600 p-2"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>` : ''}
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+
+            document.getElementById('stat-present').textContent = (present - late);
+            document.getElementById('stat-late').textContent = late;
+            document.getElementById('stat-missing').textContent = (28 - present);
+
+            renderHistory();
+        }
+
+        function resetSiswa(id) {
+            if (confirm("Hapus absen siswa ini?")) {
+                const s = state.todayData.find(x => x.id == id);
+                s.status = ''; s.time = null; s.isLate = false;
+                save(); renderAdmin();
             }
-        });
+        }
 
-        // --- EXPORTS ---
-        document.getElementById('export-excel').addEventListener('click', () => {
-            const data = state.students.map((s, i) => ({
-                'No': i + 1,
-                'Nama Siswa': s.name,
-                'Gender': s.gender,
-                'Status': s.status ? s.status.toUpperCase() : 'TANPA KETERANGAN',
-                'Jam Masuk': s.checkIn || '-',
-                'Keterlambatan': s.late || '-',
-                'Jam Pulang': s.checkOut || '-',
-                'Pulang Cepat': s.early || '-'
+        function manualReset() {
+            if (confirm("Bersihkan seluruh absensi hari ini?")) {
+                initNewDay(); renderAdmin();
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            if (state.history.length === 0) return;
+            
+            container.innerHTML = '';
+            state.history.forEach((h, idx) => {
+                const count = h.data.filter(s => s.status).length;
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-blue-200 transition";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="h-10 w-10 bg-white rounded-xl flex items-center justify-center font-bold text-blue-900 shadow-sm">${idx + 1}</div>
+                        <div>
+                            <p class="font-bold text-gray-800">${h.date}</p>
+                            <p class="text-xs text-gray-400 font-medium">${count} Siswa Hadir dari 28</p>
+                        </div>
+                    </div>
+                    <button onclick="downloadHistory(${idx})" class="text-[10px] bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold uppercase hover:bg-blue-600 hover:text-white transition">Unduh PDF</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // EXPORTS
+        function exportExcel() {
+            const data = state.todayData.map((s, i) => ({
+                'No': i + 1, 'Nama': s.name, 'Gender': s.gender, 'Waktu': s.time || '-', 'Status': s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA'
             }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Rekap_Harian");
-            XLSX.writeFile(wb, `Presensi_BM_${new Date().toLocaleDateString('id-ID')}.xlsx`);
-        });
+            XLSX.utils.book_append_sheet(wb, ws, "Absensi");
+            XLSX.writeFile(wb, `Laporan_BM_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
 
-        document.getElementById('export-pdf').addEventListener('click', () => {
+        function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text(`LAPORAN PRESENSI ${SCHOOL_NAME.toUpperCase()}`, 105, 15, { align: 'center' });
+            doc.text("Laporan Presensi SMK Bina Mandiri", 105, 15, { align: 'center' });
+            const rows = state.todayData.map((s, i) => [i+1, s.name, s.gender === 'Laki Laki' ? 'L' : 'P', s.time || '-', s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA']);
+            doc.autoTable({ head: [['No', 'Nama', 'L/P', 'Jam', 'Ket']], body: rows, startY: 25 });
+            doc.save(`Laporan_BM_${new Date().toISOString().slice(0,10)}.pdf`);
+        }
+
+        function downloadHistory(idx) {
+            const h = state.history[idx];
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`Arsip Presensi SMK Bina Mandiri`, 105, 15, { align: 'center' });
             doc.setFontSize(10);
-            doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}`, 105, 22, { align: 'center' });
-            
-            const rows = state.students.map((s, i) => [
-                i+1, s.name, s.gender, s.status || '-', s.checkIn || '-', s.checkOut || '-'
-            ]);
-            doc.autoTable({
-                head: [['No', 'Nama Siswa', 'L/P', 'Status', 'Masuk', 'Pulang']],
-                body: rows,
-                startY: 30,
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [37, 99, 235] }
-            });
-            doc.save(`Laporan_Presensi_BM_${new Date().toISOString().split('T')[0]}.pdf`);
-        });
+            doc.text(`Tanggal: ${h.date}`, 105, 22, { align: 'center' });
+            const rows = h.data.map((s, i) => [i+1, s.name, s.gender === 'Laki Laki' ? 'L' : 'P', s.time || '-', s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA']);
+            doc.autoTable({ head: [['No', 'Nama', 'L/P', 'Jam', 'Ket']], body: rows, startY: 30 });
+            doc.save(`Arsip_BM_${h.date.replace(/ /g, '_')}.pdf`);
+        }
 
         init();
     </script>
