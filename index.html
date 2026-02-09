@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>E-Absensi SMK Bina Mandiri</title>
+    <title>E-Presensi SMK Bina Mandiri</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    
     <style>
         body { font-family: "Poppins", sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
         
-        .bg-login { 
+        .bg-view { 
             background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
                         url('a62068ec-917a-4201-ba97-d5dc828be7d4.jpg');
             background-size: cover;
@@ -23,508 +21,578 @@
             background-attachment: fixed;
         }
 
-        .glass {
+        .glass-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .tab-active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+        .tab.active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
         
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="app-container">
-        <!-- VIEW 1: PORTAL UTAMA -->
-        <div id="view-portal" class="bg-login fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-8 text-center fade-in">
-                <img src="logo.png" alt="Logo SMK Bina Mandiri" class="h-28 mx-auto mb-6 drop-shadow-lg">
-                <h1 class="text-2xl font-bold text-gray-800">SMK Bina Mandiri</h1>
-                <p class="text-gray-500 text-sm mb-8">Sistem Presensi Digital</p>
-                
-                <div class="grid grid-cols-1 gap-4">
-                    <button onclick="navigateTo('attendance')" class="flex items-center justify-between bg-blue-700 text-white p-5 rounded-2xl font-bold hover:bg-blue-800 transition shadow-lg group">
-                        <span class="text-lg">Masuk Absensi Siswa</span>
-                        <svg class="h-6 w-6 group-hover:translate-x-2 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-width="2"/></svg>
-                    </button>
-                    <button onclick="navigateTo('login')" class="flex items-center justify-between bg-white text-gray-700 border-2 border-gray-100 p-5 rounded-2xl font-bold hover:bg-gray-50 transition shadow-sm">
-                        <span class="text-lg text-blue-700">Login Administrator</span>
-                        <svg class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-width="2"/></svg>
-                    </button>
+    <!-- VIEW: ABSEN SISWA -->
+    <div id="page-siswa" class="hidden min-h-screen bg-view flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-lg p-8 text-center fade-in">
+            <img src="logo.png" alt="Logo" class="h-24 mx-auto mb-4 drop-shadow-md">
+            <h1 class="text-2xl font-bold text-gray-800">Presensi Siswa</h1>
+            <p class="text-blue-600 font-bold text-sm mb-6">SMK Bina Mandiri</p>
+
+            <div id="student-form-area" class="space-y-4 text-left">
+                <div class="bg-blue-50 p-4 rounded-2xl mb-4 border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-blue-400 uppercase">Waktu Sekarang</p>
+                        <h2 id="clock-siswa" class="text-2xl font-black text-blue-800">00:00:00</h2>
+                    </div>
+                    <button onclick="window.location.hash='#admin'" class="text-[10px] text-gray-400 hover:text-blue-600 font-bold uppercase underline">Admin Area</button>
                 </div>
+
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-600 mb-1 ml-1">Pilih Nama Lengkap Anda</label>
+                    <select id="student-select" class="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition appearance-none cursor-pointer">
+                        <option value="">-- Pilih Nama Lengkap --</option>
+                    </select>
+                </div>
+
+                <button id="btn-submit-absen" onclick="submitAbsenSiswa()" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition transform active:scale-95">ABSEN SEKARANG</button>
             </div>
-        </div>
 
-        <!-- VIEW 2: HALALMAN ABSENSI SISWA -->
-        <div id="view-attendance" class="bg-login fixed inset-0 z-40 hidden flex items-center justify-center p-4">
-            <div class="glass rounded-3xl shadow-2xl w-full max-w-lg p-8 fade-in relative text-center">
-                <button onclick="navigateTo('portal')" class="absolute top-6 left-6 text-gray-400 hover:text-blue-600">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
-                </button>
-                
-                <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Presensi Mandiri Siswa</h2>
-                <p id="live-time-student" class="text-blue-600 font-bold text-2xl mt-2 mb-8">00:00:00</p>
-
-                <div id="attendance-form" class="space-y-5">
-                    <div class="text-left">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Pilih Nama Lengkap</label>
-                        <select id="student-select" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition appearance-none cursor-pointer">
-                            <option value="">-- Cari Nama Anda --</option>
-                        </select>
-                    </div>
-
-                    <button onclick="submitAttendance()" class="w-full bg-blue-700 text-white py-5 rounded-2xl font-bold shadow-xl hover:bg-blue-800 transition transform active:scale-95 text-lg">KONFIRMASI ABSENSI</button>
+            <!-- SUCCESS VIEW -->
+            <div id="success-view" class="hidden py-10 fade-in">
+                <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
                 </div>
-                
-                <div id="attendance-success" class="hidden py-10">
-                    <div class="bg-green-100 text-green-700 p-6 rounded-2xl border border-green-200">
-                        <svg class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/></svg>
-                        <p class="font-bold text-lg">Absensi Berhasil!</p>
-                        <p class="text-sm">Anda akan dialihkan kembali dalam 3 detik...</p>
-                    </div>
-                </div>
+                <h2 class="text-xl font-bold text-gray-800">Absensi Berhasil!</h2>
+                <p id="success-name" class="text-blue-600 font-bold text-lg mt-2"></p>
+                <p class="text-gray-500 text-sm mt-1">Terima kasih. Halaman ini akan segera ditutup.</p>
             </div>
-        </div>
-
-        <!-- VIEW 3: LOGIN ADMIN -->
-        <div id="view-login" class="bg-login fixed inset-0 z-40 hidden flex items-center justify-center p-4">
-            <div class="glass rounded-3xl shadow-2xl w-full max-w-md p-10 text-center fade-in relative">
-                <button onclick="navigateTo('portal')" class="absolute top-6 left-6 text-gray-400">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg>
-                </button>
-                <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-8">Login Administrator</h2>
-                
-                <form id="login-form" class="space-y-4 text-left">
-                    <input type="password" id="admin-password" placeholder="Masukkan Password Admin" class="w-full px-5 py-4 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" required>
-                    <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-black transition active:scale-95">MASUK PANEL KONTROL</button>
-                </form>
-                <p id="login-error" class="text-red-500 text-xs mt-4 hidden font-bold italic">Password admin salah!</p>
-            </div>
-        </div>
-
-        <!-- VIEW 4: DASHBOARD ADMIN -->
-        <div id="view-admin" class="hidden min-h-screen">
-            <header class="bg-blue-900 text-white p-6 shadow-xl sticky top-0 z-50">
-                <div class="container mx-auto flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <img src="logo.png" class="h-10 bg-white p-1 rounded-lg">
-                        <div>
-                            <h1 class="font-bold text-lg leading-none">Admin SMK Bina Mandiri</h1>
-                            <p class="text-[10px] uppercase font-bold tracking-widest opacity-60">Dashboard Kendali</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-right">
-                            <div id="live-time-admin" class="text-xl font-bold tabular-nums">00:00:00</div>
-                            <div id="live-date-admin" class="text-[9px] opacity-70 uppercase font-bold tracking-widest">Memuat...</div>
-                        </div>
-                        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 p-3 rounded-xl transition shadow-lg">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <main class="container mx-auto p-4 md:p-8">
-                <!-- Nav Tabs -->
-                <div class="flex gap-6 border-b mb-8 overflow-x-auto">
-                    <button id="tab-btn-today" onclick="switchTab('today')" class="tab-active pb-2 text-sm font-bold transition">Absensi Hari Ini</button>
-                    <button id="tab-btn-history" onclick="switchTab('history')" class="text-gray-400 pb-2 text-sm font-bold transition hover:text-blue-600">Riwayat & Arsip</button>
-                    <button id="tab-btn-qris" onclick="switchTab('qris')" class="text-gray-400 pb-2 text-sm font-bold transition hover:text-blue-600">QRIS Kehadiran</button>
-                </div>
-
-                <!-- Tab: Today -->
-                <div id="tab-today" class="tab-content">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-green-500">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Hadir Tepat</p>
-                            <h3 id="stat-present" class="text-4xl font-black text-gray-800">0</h3>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-red-500">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Terlambat</p>
-                            <h3 id="stat-late" class="text-4xl font-black text-gray-800">0</h3>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border-b-4 border-gray-200">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Belum Absen</p>
-                            <h3 id="stat-missing" class="text-4xl font-black text-gray-800">28</h3>
-                        </div>
-                        <div class="bg-blue-600 p-6 rounded-3xl shadow-sm text-white">
-                            <p class="text-blue-200 text-[10px] font-bold uppercase">Total Siswa</p>
-                            <h3 class="text-4xl font-black">28</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-                        <div class="p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 border-b">
-                            <h2 class="font-bold text-gray-800">Pemantauan Presensi</h2>
-                            <div class="flex gap-2">
-                                <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">Ekspor Excel</button>
-                                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-700 transition">Ekspor PDF</button>
-                                <button onclick="manualReset()" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-200 transition">Reset Manual Hari Ini</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    <tr>
-                                        <th class="px-6 py-4">No</th>
-                                        <th class="px-6 py-4">Nama Siswa</th>
-                                        <th class="px-6 py-4">L/P</th>
-                                        <th class="px-6 py-4">Waktu</th>
-                                        <th class="px-6 py-4">Keterangan</th>
-                                        <th class="px-6 py-4 text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-attendance-body" class="divide-y divide-gray-100 text-sm">
-                                    <!-- Rendered by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab: History -->
-                <div id="tab-history" class="tab-content hidden">
-                    <div class="bg-white rounded-3xl shadow-sm p-8">
-                        <h2 class="font-bold text-xl text-gray-800 mb-8">Arsip Riwayat Harian</h2>
-                        <div id="history-list" class="space-y-4">
-                            <div class="text-center py-20 text-gray-400 italic">Belum ada riwayat tersimpan. Riwayat disimpan otomatis setiap jam 15:00.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab: QRIS -->
-                <div id="tab-qris" class="tab-content hidden">
-                    <div class="bg-white rounded-3xl shadow-sm p-10 max-w-xl mx-auto text-center border-2 border-blue-50">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">QRIS Presensi Massal</h2>
-                        <p id="qris-date-label" class="text-sm font-bold text-blue-500 uppercase tracking-widest mb-10">Memuat Tanggal...</p>
-                        
-                        <div class="bg-white p-6 rounded-3xl shadow-inner border border-gray-50 mb-10 inline-block">
-                            <img src="download.jpg" alt="QRIS Absensi" class="h-64 mx-auto rounded-lg shadow-md">
-                        </div>
-                        
-                        <p class="text-sm text-gray-500 italic max-w-xs mx-auto">Tampilkan gambar ini kepada siswa untuk proses absensi mandiri di halaman depan.</p>
-                    </div>
-                </div>
-            </main>
         </div>
     </div>
 
-    <script>
-        // DATA SISWA MASTER (28 Siswa)
-        const MASTER_STUDENTS = [
-            ["Anwar Heriyansyah", "Laki Laki"], ["Dila Mey Siska", "Perempuan"], ["Muhammad Oki Cesa", "Laki Laki"],
-            ["Novitasari", "Perempuan"], ["Rofi Michael Yusuf", "Laki Laki"], ["Zaiyan Izhan Idlan", "Laki Laki"],
-            ["Fina Ramadhani", "Perempuan"], ["M. Fahri Novian", "Laki Laki"], ["Andika", "Laki Laki"],
-            ["Dafa Nofa Erlangga", "Laki Laki"], ["Fahri Maulana", "Laki Laki"], ["Faujiah Sulaesih", "Perempuan"],
-            ["Kenzie Raditya Osas", "Laki Laki"], ["Siti Amelia", "Perempuan"], ["Tesa Lonika Saufani", "Perempuan"],
-            ["Theresia Yunita Jadi", "Perempuan"], ["Fita Bunga", "Perempuan"], ["Rivky Jesen P", "Laki Laki"],
-            ["Alvin Putra Pratama", "Laki Laki"], ["Arya Dimas Pratama", "Laki Laki"], ["Cornelius Rowen N", "Laki Laki"],
-            ["Devi Afriyanti", "Perempuan"], ["Elti Julianti Anthoneta B", "Perempuan"], ["Fitria Sari Gozali", "Perempuan"],
-            ["Leni Nur'aini", "Perempuan"], ["Muhammad Raihan", "Laki Laki"], ["Parasha Hapizah Asipa", "Perempuan"],
-            ["Raihan Ardiansyah", "Laki Laki"]
-        ];
+    <!-- VIEW: LOGIN ADMIN -->
+    <div id="page-admin-login" class="hidden min-h-screen bg-view flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md p-8 text-center fade-in">
+            <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-6">
+            <h1 class="text-xl font-bold text-gray-800 mb-6">Login Administrator</h1>
+            
+            <form id="admin-login-form" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Username</label>
+                    <input type="text" id="admin-username" placeholder="Masukan Username" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Password</label>
+                    <input type="password" id="admin-password" placeholder="Masukan Password" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold shadow-lg transition hover:bg-black">MASUK KE PANEL</button>
+                <a href="#siswa" class="block w-full text-center text-[10px] text-gray-400 mt-4 hover:text-blue-600 font-bold uppercase underline">Kembali ke Absen Siswa</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW: DASHBOARD ADMIN -->
+    <div id="page-admin-dashboard" class="hidden min-h-screen pb-20">
+        <header class="bg-white border-b py-6 px-4 md:px-8 sticky top-0 z-50">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="logo.png" class="h-10" alt="Logo">
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-800">Admin SMK Bina Mandiri</h1>
+                        <p id="dashboard-date" class="text-[9px] font-bold text-blue-600 uppercase tracking-widest"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="dashboard-time" class="hidden md:block text-xl font-black text-gray-800">00:00:00</div>
+                    <button onclick="logoutAdmin()" class="bg-red-100 text-red-600 p-2 rounded-xl hover:bg-red-200 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 md:px-8 mt-8">
+            <div class="flex gap-4 border-b mb-8 overflow-x-auto">
+                <button class="tab active pb-2 text-sm whitespace-nowrap" onclick="switchAdminTab('today')">Monitoring Hari Ini</button>
+                <button class="tab pb-2 text-sm whitespace-nowrap" onclick="switchAdminTab('history')">Riwayat Data</button>
+                <button class="tab pb-2 text-sm whitespace-nowrap" onclick="switchAdminTab('control')">Kontrol & QRIS</button>
+            </div>
+
+            <!-- TAB: TODAY -->
+            <div id="tab-today" class="admin-tab-content">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
+                    <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-green-500">
+                        <p class="text-gray-400 text-[9px] font-bold uppercase">Tepat Waktu</p>
+                        <h3 class="text-3xl font-black text-gray-800" id="stat-present">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-red-500">
+                        <p class="text-gray-400 text-[9px] font-bold uppercase">Terlambat</p>
+                        <h3 class="text-3xl font-black text-gray-800" id="stat-late">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-gray-200">
+                        <p class="text-gray-400 text-[9px] font-bold uppercase">Alpha / Belum Absen</p>
+                        <h3 class="text-3xl font-black text-gray-800" id="stat-missing">0</h3>
+                    </div>
+                    <div class="bg-blue-600 p-5 rounded-3xl shadow-sm text-white">
+                        <p class="text-blue-200 text-[9px] font-bold uppercase">Total Siswa</p>
+                        <h3 class="text-3xl font-black">28</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
+                        <h2 class="font-bold text-gray-800">Daftar Kehadiran</h2>
+                        <div class="flex gap-2">
+                            <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700">EXCEL</button>
+                            <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-700">PDF</button>
+                        </div>
+                    </div>
+                    <div id="admin-list-siswa" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: HISTORY -->
+            <div id="tab-history" class="admin-tab-content hidden">
+                <div class="bg-white rounded-3xl shadow-sm p-6">
+                    <div class="flex items-center gap-4 mb-8">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Pilih Tanggal Riwayat:</label>
+                        <input type="date" id="history-date-picker" onchange="loadHistoryData()" class="border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="history-content" class="min-h-[200px]">
+                        <p class="text-center text-gray-400 py-10 italic">Silakan pilih tanggal untuk melihat rekaman absensi hari-hari sebelumnya.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CONTROL -->
+            <div id="tab-control" class="admin-tab-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-3xl shadow-sm p-8 text-center">
+                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">QRIS Absensi Mandiri</h3>
+                        <div class="bg-gray-100 p-4 rounded-3xl inline-block mb-4">
+                            <img src="download.jpg" alt="QRIS Absensi" class="h-64 rounded-xl shadow-md mx-auto">
+                        </div>
+                        <p class="text-[10px] text-gray-400 italic">Berikan QRIS ini kepada siswa untuk scan absensi. <br>(File: download.jpg)</p>
+                    </div>
+
+                    <div class="bg-white rounded-3xl shadow-sm p-8">
+                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">Pengaturan & Informasi</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                <p class="text-xs font-bold text-blue-700 uppercase mb-1">Jadwal Masuk</p>
+                                <p class="text-xs text-blue-600">Jam: 07:30. <br>Terlambat jika melewati: 08:05 (Toleransi 35 Menit).</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                                <p class="text-xs font-bold text-orange-700 uppercase mb-1">Jadwal Pulang</p>
+                                <p class="text-xs text-orange-600">Senin - Kamis: 14:05. <br>Jumat: 11:00.</p>
+                            </div>
+                            <div class="p-4 bg-red-50 rounded-2xl border border-red-100">
+                                <p class="text-xs font-bold text-red-700 uppercase mb-2">Penghapusan & Reset</p>
+                                <p class="text-[10px] text-red-400 mb-3 leading-tight">Reset otomatis dilakukan setiap jam 15:00. Klik tombol dibawah untuk reset manual hari ini.</p>
+                                <button onclick="manualResetAttendance()" class="w-full bg-red-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-red-700">RESET MANUAL DATA HARI INI</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: EDIT STATUS SISWA -->
+    <div id="modal-edit-status" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-2" id="edit-siswa-name">Nama Siswa</h3>
+            <p class="text-xs text-gray-400 mb-6 uppercase font-bold tracking-widest">Update Status Kehadiran</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Status Kehadiran</label>
+                    <select id="edit-status-select" class="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <option value="">Alpha / Belum Absen</option>
+                        <option value="Hadir">Hadir</option>
+                        <option value="Izin">Izin</option>
+                        <option value="Sakit">Sakit</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Keterangan (Contoh: Alasan Pulang Cepat)</label>
+                    <textarea id="edit-keterangan" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Tulis alasan jika diperlukan..."></textarea>
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="closeEditModal()" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm">BATAL</button>
+                    <button onclick="saveEditStatus()" class="flex-1 bg-blue-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg">SIMPAN PERUBAHAN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- DATA SISWA TERBARU ---
+        const DATA_SISWA = [
+            { name: "Anwar Heriyansyah", gender: "Laki Laki" }, { name: "Dila Mey Siska", gender: "Perempuan" },
+            { name: "Muhammad Oki Cesa", gender: "Laki Laki" }, { name: "Novitasari", gender: "Perempuan" },
+            { name: "Rofi Michael Yusuf", gender: "Laki Laki" }, { name: "Zaiyan Izhan Idlan", gender: "Laki Laki" },
+            { name: "Fina Ramadhani", gender: "Perempuan" }, { name: "M. Fahri Novian", gender: "Laki Laki" },
+            { name: "Andika", gender: "Laki Laki" }, { name: "Dafa Nofa Erlangga", gender: "Laki Laki" },
+            { name: "Fahri Maulana", gender: "Laki Laki" }, { name: "Faujiah Sulaesih", gender: "Perempuan" },
+            { name: "Kenzie Raditya Osas", gender: "Laki Laki" }, { name: "Siti Amelia", gender: "Perempuan" },
+            { name: "Tesa Lonika Saufani", gender: "Perempuan" }, { name: "Theresia Yunita Jadi", gender: "Perempuan" },
+            { name: "Fita Bunga", gender: "Perempuan" }, { name: "Rivky Jesen P", gender: "Laki Laki" },
+            { name: "Alvin Putra Pratama", gender: "Laki Laki" }, { name: "Arya Dimas Pratama", gender: "Laki Laki" },
+            { name: "Cornelius Rowen N", gender: "Laki Laki" }, { name: "Devi Afriyanti", gender: "Perempuan" },
+            { name: "Elti Julianti Anthoneta B", gender: "Perempuan" }, { name: "Fitria Sari Gozali", gender: "Perempuan" },
+            { name: "Leni Nur'aini", gender: "Perempuan" }, { name: "Muhammad Raihan", gender: "Laki Laki" },
+            { name: "Parasha Hapizah Asipa", gender: "Perempuan" }, { name: "Raihan Ardiansyah", gender: "Laki Laki" }
+        ].sort((a, b) => a.name.localeCompare(b.name));
 
         const CONFIG = {
             adminPass: "admin123",
             resetTime: "15:00:00",
-            entryStart: "07:30",
-            lateTolerance: 10, // Menit (Sampai 07:40 Oke, 07:41 Telat)
-            homeMonThu: "14:05",
-            homeFri: "11:00"
+            lateThreshold: 35 // Minutes after 07:30 = 08:05
         };
 
+        // --- STATE MANAGEMENT ---
         let state = {
-            view: 'portal',
-            lastResetDate: '',
-            todayData: [],
-            history: []
+            currentRecords: {}, // { name: { time, isLate, date, status, note } }
+            history: [] // [ { date, records } ]
         };
 
-        // INITIALIZATION
-        function init() {
-            const saved = localStorage.getItem('smk_bm_db_v3');
-            if (saved) {
-                state = JSON.parse(saved);
-            } else {
-                initNewDay();
-            }
+        let editingSiswaName = null;
 
-            checkResetTime();
-            updateClocks();
-            setInterval(updateClocks, 1000);
-            renderView();
-            populateStudentSelect();
+        function init() {
+            const saved = localStorage.getItem('smk_bm_master_state');
+            if (saved) state = JSON.parse(saved);
+
+            window.addEventListener('hashchange', handleRouting);
+            handleRouting();
+
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderStudentSelect();
+            checkAutoReset();
         }
+
+        const getTodayId = () => new Date().toLocaleDateString('en-CA');
 
         function save() {
-            localStorage.setItem('smk_bm_db_v3', JSON.stringify(state));
+            localStorage.setItem('smk_bm_master_state', JSON.stringify(state));
         }
 
-        function initNewDay() {
-            state.todayData = MASTER_STUDENTS.map((s, i) => ({
-                id: i, name: s[0], gender: s[1], status: '', time: null, isLate: false
-            }));
-            state.lastResetDate = new Date().toDateString();
-            save();
-        }
+        function handleRouting() {
+            const hash = window.location.hash || '#siswa';
+            document.getElementById('page-siswa').classList.add('hidden');
+            document.getElementById('page-admin-login').classList.add('hidden');
+            document.getElementById('page-admin-dashboard').classList.add('hidden');
 
-        // NAVIGATION
-        function navigateTo(target) {
-            state.view = target;
-            renderView();
-        }
-
-        function renderView() {
-            const views = ['portal', 'attendance', 'login', 'admin'];
-            views.forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
-            
-            const current = document.getElementById(`view-${state.view}`);
-            if (current) current.classList.remove('hidden');
-
-            if (state.view === 'attendance') {
-                document.getElementById('attendance-form').classList.remove('hidden');
-                document.getElementById('attendance-success').classList.add('hidden');
-                populateStudentSelect();
+            if (hash === '#siswa') {
+                document.getElementById('page-siswa').classList.remove('hidden');
+                checkAlreadyAttended();
+            } else if (hash === '#admin') {
+                const isLogged = sessionStorage.getItem('bm_admin_logged');
+                if (isLogged) {
+                    document.getElementById('page-admin-dashboard').classList.remove('hidden');
+                    renderAdminDashboard();
+                } else {
+                    document.getElementById('page-admin-login').classList.remove('hidden');
+                }
             }
-            
-            if (state.view === 'admin') renderAdmin();
         }
 
-        // TIME & RESET LOGIC
-        function updateClocks() {
+        function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
             const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            if (document.getElementById('clock-siswa')) document.getElementById('clock-siswa').textContent = timeStr;
+            if (document.getElementById('dashboard-time')) document.getElementById('dashboard-time').textContent = timeStr;
+            if (document.getElementById('dashboard-date')) document.getElementById('dashboard-date').textContent = dateStr;
 
-            if (document.getElementById('live-time-student')) document.getElementById('live-time-student').textContent = timeStr;
-            if (document.getElementById('live-time-admin')) document.getElementById('live-time-admin').textContent = timeStr;
-            if (document.getElementById('live-date-admin')) document.getElementById('live-date-admin').textContent = dateStr;
-            if (document.getElementById('qris-date-label')) document.getElementById('qris-date-label').textContent = dateStr;
-
-            if (timeStr === CONFIG.resetTime) autoArchiveAndReset();
-        }
-
-        function checkResetTime() {
-            const today = new Date().toDateString();
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
-
-            // Jika hari berganti ATAU sudah lewat jam 15:00 hari ini tapi belum direset
-            if (state.lastResetDate !== today || (timeStr >= CONFIG.resetTime && state.lastResetDate === today)) {
-                autoArchiveAndReset();
+            // --- RISER OTOMATIS 15:00 ---
+            if (timeStr === CONFIG.resetTime) {
+                archiveAndReset(true);
             }
         }
 
-        function autoArchiveAndReset() {
-            const today = new Date().toDateString();
+        function archiveAndReset(force = false) {
+            const today = getTodayId();
+            const lastDate = localStorage.getItem('bm_last_archive_date');
             
-            // Masukkan ke riwayat jika ada data
-            if (state.todayData.some(s => s.status)) {
-                state.history.unshift({
-                    date: today + (new Date().getHours() >= 15 ? ' (15:00 Reset)' : ''),
-                    data: JSON.parse(JSON.stringify(state.todayData))
-                });
-                if (state.history.length > 30) state.history.pop();
-            }
-
-            initNewDay();
-            state.lastResetDate = today + "_reset"; // Flag agar tidak looping reset dalam satu detik
-            save();
-            if (state.view === 'admin') renderAdmin();
-        }
-
-        // STUDENT ATTENDANCE
-        function populateStudentSelect() {
-            const select = document.getElementById('student-select');
-            select.innerHTML = '<option value="">-- Cari Nama Anda --</option>';
-            
-            // Hanya tampilkan siswa yang BELUM absen
-            const available = [...state.todayData].sort((a,b) => a.name.localeCompare(b.name));
-            available.forEach(s => {
-                if (!s.status) {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = s.name;
-                    select.appendChild(opt);
+            if (lastDate !== today || force) {
+                // Simpan data hari ini ke riwayat jika ada isinya
+                if (Object.keys(state.currentRecords).length > 0) {
+                    state.history.unshift({ date: lastDate || today, records: { ...state.currentRecords } });
+                    if (state.history.length > 60) state.history.pop(); // Keep 60 days
                 }
+                
+                state.currentRecords = {};
+                localStorage.setItem('bm_last_archive_date', today);
+                save();
+                location.reload(); 
+            }
+        }
+
+        function checkAutoReset() {
+            const today = getTodayId();
+            const lastDate = localStorage.getItem('bm_last_archive_date');
+            if (lastDate && lastDate !== today) {
+                archiveAndReset();
+            } else if (!lastDate) {
+                localStorage.setItem('bm_last_archive_date', today);
+            }
+        }
+
+        function renderStudentSelect() {
+            const select = document.getElementById('student-select');
+            select.innerHTML = '<option value="">-- Pilih Nama Lengkap --</option>';
+            DATA_SISWA.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = s.name;
+                select.appendChild(opt);
             });
         }
 
-        function submitAttendance() {
-            const studentId = document.getElementById('student-select').value;
-            if (!studentId) {
-                alert("Silakan pilih nama Anda terlebih dahulu.");
+        function checkAlreadyAttended() {
+            const today = getTodayId();
+            const localToken = localStorage.getItem('bm_absen_lock_' + today);
+            
+            if (localToken && state.currentRecords[localToken]) {
+                document.getElementById('student-form-area').classList.add('hidden');
+                document.getElementById('success-view').classList.remove('hidden');
+                document.getElementById('success-name').textContent = localToken;
+            } else {
+                document.getElementById('student-form-area').classList.remove('hidden');
+                document.getElementById('success-view').classList.add('hidden');
+            }
+        }
+
+        window.submitAbsenSiswa = function() {
+            const name = document.getElementById('student-select').value;
+            if (!name) return alert("Pilih nama Anda terlebih dahulu!");
+
+            if (state.currentRecords[name]) {
+                alert("Anda sudah melakukan absensi hari ini.");
                 return;
             }
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
             
-            // Logika Terlambat (07:30 + 10 menit = 07:40)
+            // --- LOGIKA TERLAMBAT (35 Menit dari 07:30 = 08:05) ---
             const [h, m] = timeStr.split(':').map(Number);
-            const isLate = (h > 7) || (h === 7 && m > (30 + CONFIG.lateTolerance));
+            const isLate = (h > 8) || (h === 8 && m > 5);
 
-            const student = state.todayData.find(s => s.id == studentId);
-            student.status = 'hadir';
-            student.time = timeStr;
-            student.isLate = isLate;
+            state.currentRecords[name] = {
+                name: name,
+                time: timeStr,
+                isLate: isLate,
+                status: 'Hadir',
+                date: getTodayId(),
+                note: ''
+            };
 
+            localStorage.setItem('bm_absen_lock_' + getTodayId(), name);
             save();
-
-            document.getElementById('attendance-form').classList.add('hidden');
-            document.getElementById('attendance-success').classList.remove('hidden');
-
-            // Keluar otomatis setelah 3 detik
+            checkAlreadyAttended();
+            
+            // --- SISTEM LANGSUNG KELUAR / BLANK SETELAH ABSEN ---
             setTimeout(() => {
-                navigateTo('portal');
-            }, 3000);
-        }
+                alert("Absensi Berhasil. Sistem akan segera ditutup untuk sesi Anda.");
+                window.location.href = "about:blank"; 
+            }, 3500);
+        };
 
-        // ADMIN LOGIC
-        document.getElementById('login-form').onsubmit = function(e) {
+        // --- ADMIN ACTIONS ---
+        document.getElementById('admin-login-form').onsubmit = function(e) {
             e.preventDefault();
+            const user = document.getElementById('admin-username').value;
             const pass = document.getElementById('admin-password').value;
-            if (pass === CONFIG.adminPass) {
-                navigateTo('admin');
-                document.getElementById('admin-password').value = "";
+            if (user === 'admin' && pass === CONFIG.adminPass) {
+                sessionStorage.setItem('bm_admin_logged', 'true');
+                handleRouting();
             } else {
-                const err = document.getElementById('login-error');
-                err.classList.remove('hidden');
-                setTimeout(() => err.classList.add('hidden'), 3000);
+                alert("Kredensial Admin Salah!");
             }
         };
 
-        function logout() { navigateTo('portal'); }
+        window.logoutAdmin = function() {
+            sessionStorage.removeItem('bm_admin_logged');
+            window.location.hash = '#siswa';
+        };
 
-        function switchTab(target) {
-            ['today', 'history', 'qris'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${t}`).classList.remove('tab-active');
-                document.getElementById(`tab-btn-${t}`).classList.add('text-gray-400');
-            });
-            document.getElementById(`tab-${target}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${target}`).classList.add('tab-active');
-            document.getElementById(`tab-btn-${target}`).classList.remove('text-gray-400');
-        }
+        window.switchAdminTab = function(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+        };
 
-        function renderAdmin() {
-            const body = document.getElementById('table-attendance-body');
-            body.innerHTML = '';
-            
+        function renderAdminDashboard() {
+            const container = document.getElementById('admin-list-siswa');
+            if (!container) return;
+            container.innerHTML = '';
+
             let present = 0, late = 0;
-            state.todayData.forEach((s, i) => {
-                if (s.status) {
-                    present++;
-                    if (s.isLate) late++;
+            DATA_SISWA.forEach(s => {
+                const rec = state.currentRecords[s.name];
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-3xl bg-white shadow-sm flex flex-col justify-between border-l-8 ${rec ? (rec.status === 'Hadir' ? (rec.isLate ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50') : 'border-yellow-500 bg-yellow-50') : 'border-gray-200'}`;
+                
+                if (rec) {
+                    if (rec.status === 'Hadir') {
+                        if (rec.isLate) late++; else present++;
+                    }
                 }
 
-                const row = document.createElement('tr');
-                const statusTag = s.status 
-                    ? `<span class="px-3 py-1 rounded-full font-bold text-[10px] ${s.isLate ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${s.isLate ? 'TERLAMBAT' : 'HADIR'}</span>`
-                    : `<span class="px-3 py-1 rounded-full font-bold text-[10px] bg-gray-100 text-gray-400">ALPA</span>`;
-
-                row.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-gray-400">${i + 1}</td>
-                    <td class="px-6 py-4 font-bold text-gray-800">${s.name}</td>
-                    <td class="px-6 py-4 text-gray-500 font-medium">${s.gender === 'Laki Laki' ? 'L' : 'P'}</td>
-                    <td class="px-6 py-4 font-bold text-blue-800">${s.time || '--:--'}</td>
-                    <td class="px-6 py-4">${statusTag}</td>
-                    <td class="px-6 py-4 text-center">
-                        ${s.status ? `<button onclick="resetSiswa(${s.id})" class="text-red-400 hover:text-red-600 p-2"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>` : ''}
-                    </td>
-                `;
-                body.appendChild(row);
-            });
-
-            document.getElementById('stat-present').textContent = (present - late);
-            document.getElementById('stat-late').textContent = late;
-            document.getElementById('stat-missing').textContent = (28 - present);
-
-            renderHistory();
-        }
-
-        function resetSiswa(id) {
-            if (confirm("Hapus absen siswa ini?")) {
-                const s = state.todayData.find(x => x.id == id);
-                s.status = ''; s.time = null; s.isLate = false;
-                save(); renderAdmin();
-            }
-        }
-
-        function manualReset() {
-            if (confirm("Bersihkan seluruh absensi hari ini?")) {
-                initNewDay(); renderAdmin();
-            }
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('history-list');
-            if (state.history.length === 0) return;
-            
-            container.innerHTML = '';
-            state.history.forEach((h, idx) => {
-                const count = h.data.filter(s => s.status).length;
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-blue-200 transition";
-                div.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="h-10 w-10 bg-white rounded-xl flex items-center justify-center font-bold text-blue-900 shadow-sm">${idx + 1}</div>
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">${s.name.charAt(0)}</div>
                         <div>
-                            <p class="font-bold text-gray-800">${h.date}</p>
-                            <p class="text-xs text-gray-400 font-medium">${count} Siswa Hadir dari 28</p>
+                            <h4 class="text-sm font-bold text-gray-800 leading-tight">${s.name}</h4>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">${s.gender}</p>
                         </div>
                     </div>
-                    <button onclick="downloadHistory(${idx})" class="text-[10px] bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold uppercase hover:bg-blue-600 hover:text-white transition">Unduh PDF</button>
+                    <div class="flex items-center justify-between border-t border-dashed pt-4 mt-auto">
+                        <div class="text-[10px] font-bold">
+                            ${rec ? `
+                                <span class="text-blue-600 block">Status: ${rec.status} ${rec.time ? 'at ' + rec.time : ''}</span>
+                                ${rec.isLate ? '<span class="text-red-500">Keterangan: TERLAMBAT</span>' : ''}
+                                ${rec.note ? `<span class="text-orange-500 block">Note: ${rec.note}</span>` : ''}
+                            ` : `<span class="text-gray-300">Belum Melakukan Absensi</span>`}
+                        </div>
+                        <button onclick="openEditModal('${s.name}')" class="p-2 text-blue-500 hover:bg-blue-100 rounded-xl transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                    </div>
                 `;
-                container.appendChild(div);
+                container.appendChild(card);
             });
+
+            document.getElementById('stat-present').textContent = present;
+            document.getElementById('stat-late').textContent = late;
+            document.getElementById('stat-missing').textContent = DATA_SISWA.length - (present + late + Object.values(state.currentRecords).filter(r => r.status !== 'Hadir').length);
         }
 
-        // EXPORTS
-        function exportExcel() {
-            const data = state.todayData.map((s, i) => ({
-                'No': i + 1, 'Nama': s.name, 'Gender': s.gender, 'Waktu': s.time || '-', 'Status': s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA'
-            }));
+        window.openEditModal = function(name) {
+            editingSiswaName = name;
+            const rec = state.currentRecords[name];
+            document.getElementById('edit-siswa-name').textContent = name;
+            document.getElementById('edit-status-select').value = rec ? (rec.status === 'Hadir' ? 'Hadir' : rec.status) : '';
+            document.getElementById('edit-keterangan').value = rec ? rec.note : '';
+            document.getElementById('modal-edit-status').classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('modal-edit-status').classList.add('hidden');
+            editingSiswaName = null;
+        };
+
+        window.saveEditStatus = function() {
+            const status = document.getElementById('edit-status-select').value;
+            const note = document.getElementById('edit-keterangan').value;
+
+            if (status === "") {
+                delete state.currentRecords[editingSiswaName];
+            } else {
+                const existing = state.currentRecords[editingSiswaName] || {};
+                state.currentRecords[editingSiswaName] = {
+                    ...existing,
+                    name: editingSiswaName,
+                    status: status,
+                    note: note,
+                    date: getTodayId(),
+                    isLate: existing.isLate || false,
+                    time: existing.time || (status === 'Hadir' ? new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' }) : null)
+                };
+            }
+
+            save();
+            closeEditModal();
+            renderAdminDashboard();
+        };
+
+        window.manualResetAttendance = function() {
+            if (confirm("Apakah Anda yakin ingin menghapus SELURUH data absensi hari ini secara manual? Data tidak akan diarsipkan ke riwayat.")) {
+                state.currentRecords = {};
+                save();
+                renderAdminDashboard();
+                alert("Data berhasil direset.");
+            }
+        };
+
+        window.loadHistoryData = function() {
+            const date = document.getElementById('history-date-picker').value;
+            if (!date) return;
+            
+            const container = document.getElementById('history-content');
+            const historyEntry = state.history.find(h => h.date === date);
+
+            if (historyEntry) {
+                const hist = historyEntry.records;
+                let html = '<div class="overflow-x-auto"><table class="w-full text-xs text-left text-gray-500 border-collapse"><thead class="bg-gray-50 uppercase font-bold text-gray-400"><tr><th class="p-3 border-b">Nama</th><th class="p-3 border-b text-center">Waktu</th><th class="p-3 border-b text-center">Status</th><th class="p-3 border-b">Catatan</th></tr></thead><tbody class="divide-y">';
+                DATA_SISWA.forEach(s => {
+                    const r = hist[s.name];
+                    html += `<tr class="hover:bg-gray-50"><td class="p-3 font-bold text-gray-800">${s.name}</td><td class="p-3 text-center">${r && r.time ? r.time : '-'}</td><td class="p-3 text-center"><span class="px-2 py-1 rounded-full font-bold ${r ? (r.status === 'Hadir' ? (r.isLate ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600') : 'bg-yellow-100 text-yellow-600') : 'text-gray-300'}">${r ? (r.isLate ? 'TERLAMBAT' : r.status) : 'ALPHA'}</span></td><td class="p-3 italic text-gray-400">${r && r.note ? r.note : '-'}</td></tr>`;
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-center py-10 text-gray-400 italic">Maaf, tidak ada rekaman absensi yang ditemukan untuk tanggal tersebut.</p>';
+            }
+        };
+
+        // --- EXPORT FUNCTIONS ---
+        window.exportExcel = function() {
+            const data = DATA_SISWA.map(s => {
+                const r = state.currentRecords[s.name];
+                return { 
+                    'Nama': s.name, 
+                    'L/P': s.gender, 
+                    'Status': r ? r.status : 'Alpha', 
+                    'Jam': r && r.time ? r.time : '-', 
+                    'Keterlambatan': r && r.isLate ? 'Ya' : 'Tidak',
+                    'Catatan Admin': r && r.note ? r.note : '-'
+                };
+            });
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Absensi");
-            XLSX.writeFile(wb, `Laporan_BM_${new Date().toISOString().slice(0,10)}.xlsx`);
-        }
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Absensi");
+            XLSX.writeFile(wb, `Laporan_Absensi_BM_${getTodayId()}.xlsx`);
+        };
 
-        function exportPDF() {
+        window.exportPDF = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("Laporan Presensi SMK Bina Mandiri", 105, 15, { align: 'center' });
-            const rows = state.todayData.map((s, i) => [i+1, s.name, s.gender === 'Laki Laki' ? 'L' : 'P', s.time || '-', s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA']);
-            doc.autoTable({ head: [['No', 'Nama', 'L/P', 'Jam', 'Ket']], body: rows, startY: 25 });
-            doc.save(`Laporan_BM_${new Date().toISOString().slice(0,10)}.pdf`);
-        }
-
-        function downloadHistory(idx) {
-            const h = state.history[idx];
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text(`Arsip Presensi SMK Bina Mandiri`, 105, 15, { align: 'center' });
+            doc.text(`Laporan Presensi SMK Bina Mandiri`, 105, 15, { align: 'center' });
             doc.setFontSize(10);
-            doc.text(`Tanggal: ${h.date}`, 105, 22, { align: 'center' });
-            const rows = h.data.map((s, i) => [i+1, s.name, s.gender === 'Laki Laki' ? 'L' : 'P', s.time || '-', s.status ? (s.isLate ? 'TELAT' : 'HADIR') : 'ALPA']);
-            doc.autoTable({ head: [['No', 'Nama', 'L/P', 'Jam', 'Ket']], body: rows, startY: 30 });
-            doc.save(`Arsip_BM_${h.date.replace(/ /g, '_')}.pdf`);
-        }
+            doc.text(`Tanggal: ${getTodayId()}`, 105, 22, { align: 'center' });
 
+            const rows = DATA_SISWA.map((s, idx) => {
+                const r = state.currentRecords[s.name];
+                return [idx + 1, s.name, s.gender, r ? r.status : 'Alpha', r && r.time ? r.time : '-', r && r.note ? r.note : '-'];
+            });
+
+            doc.autoTable({
+                head: [['No', 'Nama', 'L/P', 'Status', 'Jam', 'Note']],
+                body: rows,
+                startY: 30,
+                theme: 'grid'
+            });
+            doc.save(`Laporan_Presensi_BM_${getTodayId()}.pdf`);
+        };
+
+        // --- RUN INITIALIZATION ---
         init();
     </script>
 </body>
