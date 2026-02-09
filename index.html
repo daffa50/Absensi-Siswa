@@ -35,8 +35,6 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -57,14 +55,14 @@
                     <button onclick="window.location.hash='#admin'" class="text-[10px] text-gray-400 hover:text-blue-600 font-bold uppercase underline">Admin Area</button>
                 </div>
 
-                <div class="relative">
+                <div>
                     <label class="block text-xs font-bold text-gray-600 mb-1 ml-1">Pilih Nama Lengkap Anda</label>
-                    <select id="student-select" class="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition appearance-none cursor-pointer">
-                        <option value="">-- Pilih Nama Lengkap --</option>
+                    <select id="student-select" class="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition appearance-none">
+                        <option value="">-- Memuat Nama... --</option>
                     </select>
                 </div>
 
-                <button id="btn-submit-absen" onclick="submitAbsenSiswa()" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition transform active:scale-95">ABSEN SEKARANG</button>
+                <button id="btn-submit-absen" onclick="submitAbsenSiswa()" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition transform active:scale-95 disabled:bg-gray-400">ABSEN SEKARANG</button>
             </div>
 
             <!-- SUCCESS VIEW -->
@@ -73,8 +71,8 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">Absensi Berhasil!</h2>
-                <p id="success-name" class="text-blue-600 font-bold text-lg mt-2"></p>
-                <p class="text-gray-500 text-sm mt-1">Terima kasih. Halaman ini akan segera ditutup.</p>
+                <p class="text-gray-500 text-sm mt-2">Terima kasih. Anda telah melakukan presensi hari ini.</p>
+                <p class="text-[10px] text-gray-400 mt-4 italic">Halaman akan otomatis direset besok.</p>
             </div>
         </div>
     </div>
@@ -87,12 +85,12 @@
             
             <form id="admin-login-form" class="space-y-4 text-left">
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Username</label>
-                    <input type="text" id="admin-username" placeholder="Masukan Username" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Username Admin</label>
+                    <input type="text" id="admin-username" placeholder="admin" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Password</label>
-                    <input type="password" id="admin-password" placeholder="Masukan Password" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Password Admin</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" class="w-full px-5 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold shadow-lg transition hover:bg-black">MASUK KE PANEL</button>
                 <a href="#siswa" class="block w-full text-center text-[10px] text-gray-400 mt-4 hover:text-blue-600 font-bold uppercase underline">Kembali ke Absen Siswa</a>
@@ -139,7 +137,7 @@
                         <h3 class="text-3xl font-black text-gray-800" id="stat-late">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-gray-200">
-                        <p class="text-gray-400 text-[9px] font-bold uppercase">Alpha / Belum Absen</p>
+                        <p class="text-gray-400 text-[9px] font-bold uppercase">Belum Absen</p>
                         <h3 class="text-3xl font-black text-gray-800" id="stat-missing">0</h3>
                     </div>
                     <div class="bg-blue-600 p-5 rounded-3xl shadow-sm text-white">
@@ -166,11 +164,11 @@
             <div id="tab-history" class="admin-tab-content hidden">
                 <div class="bg-white rounded-3xl shadow-sm p-6">
                     <div class="flex items-center gap-4 mb-8">
-                        <label class="text-xs font-bold text-gray-500 uppercase">Pilih Tanggal Riwayat:</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Pilih Tanggal:</label>
                         <input type="date" id="history-date-picker" onchange="loadHistoryData()" class="border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div id="history-content" class="min-h-[200px]">
-                        <p class="text-center text-gray-400 py-10 italic">Silakan pilih tanggal untuk melihat rekaman absensi hari-hari sebelumnya.</p>
+                        <p class="text-center text-gray-400 py-10 italic">Pilih tanggal untuk melihat riwayat absensi.</p>
                     </div>
                 </div>
             </div>
@@ -179,28 +177,27 @@
             <div id="tab-control" class="admin-tab-content hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-white rounded-3xl shadow-sm p-8 text-center">
-                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">QRIS Absensi Mandiri</h3>
+                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">QRIS Absensi Harian</h3>
                         <div class="bg-gray-100 p-4 rounded-3xl inline-block mb-4">
-                            <img src="download.jpg" alt="QRIS Absensi" class="h-64 rounded-xl shadow-md mx-auto">
+                            <img src="download.jpg" alt="QRIS Absensi" class="h-56 rounded-xl shadow-md">
                         </div>
-                        <p class="text-[10px] text-gray-400 italic">Berikan QRIS ini kepada siswa untuk scan absensi. <br>(File: download.jpg)</p>
+                        <p class="text-[10px] text-gray-400 italic">Scan QRIS download.jpg untuk absen mandiri.</p>
                     </div>
 
                     <div class="bg-white rounded-3xl shadow-sm p-8">
-                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">Pengaturan & Informasi</h3>
+                        <h3 class="font-bold text-gray-800 mb-6 uppercase text-sm tracking-widest">Informasi Jadwal</h3>
                         <div class="space-y-4">
                             <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                <p class="text-xs font-bold text-blue-700 uppercase mb-1">Jadwal Masuk</p>
-                                <p class="text-xs text-blue-600">Jam: 07:30. <br>Terlambat jika melewati: 08:05 (Toleransi 35 Menit).</p>
+                                <p class="text-xs font-bold text-blue-700 uppercase mb-1">Batas Masuk</p>
+                                <p class="text-xs text-blue-600">Jam: 07:30. <br>Toleransi Terlambat: 35 Menit (Sampai 08:05).</p>
                             </div>
                             <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                                <p class="text-xs font-bold text-orange-700 uppercase mb-1">Jadwal Pulang</p>
-                                <p class="text-xs text-orange-600">Senin - Kamis: 14:05. <br>Jumat: 11:00.</p>
+                                <p class="text-xs font-bold text-orange-700 uppercase mb-1">Batas Pulang</p>
+                                <p class="text-xs text-orange-600">Senin - Kamis: 14:00. <br>Jumat: 11:00.</p>
                             </div>
                             <div class="p-4 bg-red-50 rounded-2xl border border-red-100">
-                                <p class="text-xs font-bold text-red-700 uppercase mb-2">Penghapusan & Reset</p>
-                                <p class="text-[10px] text-red-400 mb-3 leading-tight">Reset otomatis dilakukan setiap jam 15:00. Klik tombol dibawah untuk reset manual hari ini.</p>
-                                <button onclick="manualResetAttendance()" class="w-full bg-red-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-red-700">RESET MANUAL DATA HARI INI</button>
+                                <p class="text-xs font-bold text-red-700 uppercase mb-2">Penghapusan Data</p>
+                                <button onclick="manualResetAttendance()" class="w-full bg-red-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-red-700">RESET MANUAL ABSEN HARI INI</button>
                             </div>
                         </div>
                     </div>
@@ -209,36 +206,38 @@
         </main>
     </div>
 
-    <!-- MODAL: EDIT STATUS SISWA -->
-    <div id="modal-edit-status" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h3 class="text-lg font-bold text-gray-800 mb-2" id="edit-siswa-name">Nama Siswa</h3>
-            <p class="text-xs text-gray-400 mb-6 uppercase font-bold tracking-widest">Update Status Kehadiran</p>
+    <!-- MODAL: EDIT STATUS -->
+    <div id="modal-edit-status" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+            <h3 id="modal-edit-name" class="font-bold text-lg text-gray-800 mb-2">Nama Siswa</h3>
+            <p class="text-xs text-gray-400 mb-6 font-bold uppercase tracking-widest">Edit Status Kehadiran</p>
             
+            <input type="hidden" id="edit-student-index">
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Status Kehadiran</label>
-                    <select id="edit-status-select" class="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <option value="">Alpha / Belum Absen</option>
-                        <option value="Hadir">Hadir</option>
-                        <option value="Izin">Izin</option>
-                        <option value="Sakit">Sakit</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Status</label>
+                    <select id="edit-status-select" class="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="hadir">Hadir</option>
+                        <option value="izin">Izin</option>
+                        <option value="sakit">Sakit</option>
+                        <option value="alpa">Alpa</option>
+                        <option value="">Belum Absen</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Keterangan (Contoh: Alasan Pulang Cepat)</label>
-                    <textarea id="edit-keterangan" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Tulis alasan jika diperlukan..."></textarea>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Keterangan (Opsional)</label>
+                    <textarea id="edit-keterangan" rows="2" class="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: Pulang cepat karena sakit..."></textarea>
                 </div>
                 <div class="flex gap-2 pt-4">
-                    <button onclick="closeEditModal()" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm">BATAL</button>
-                    <button onclick="saveEditStatus()" class="flex-1 bg-blue-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg">SIMPAN PERUBAHAN</button>
+                    <button onclick="closeEditModal()" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">Batal</button>
+                    <button onclick="saveStudentEdit()" class="flex-1 bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg">Simpan</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // --- DATA SISWA TERBARU ---
+        // --- DATA & CONFIG ---
         const DATA_SISWA = [
             { name: "Anwar Heriyansyah", gender: "Laki Laki" }, { name: "Dila Mey Siska", gender: "Perempuan" },
             { name: "Muhammad Oki Cesa", gender: "Laki Laki" }, { name: "Novitasari", gender: "Perempuan" },
@@ -257,21 +256,20 @@
         ].sort((a, b) => a.name.localeCompare(b.name));
 
         const CONFIG = {
+            adminUser: "admin",
             adminPass: "admin123",
-            resetTime: "15:00:00",
+            resetTime: "16:00:00",
             lateThreshold: 35 // Minutes after 07:30 = 08:05
         };
 
-        // --- STATE MANAGEMENT ---
+        // --- STATE ---
         let state = {
             currentRecords: {}, // { name: { time, isLate, date, status, note } }
             history: [] // [ { date, records } ]
         };
 
-        let editingSiswaName = null;
-
         function init() {
-            const saved = localStorage.getItem('smk_bm_master_state');
+            const saved = localStorage.getItem('smk_bm_state_final');
             if (saved) state = JSON.parse(saved);
 
             window.addEventListener('hashchange', handleRouting);
@@ -286,7 +284,7 @@
         const getTodayId = () => new Date().toLocaleDateString('en-CA');
 
         function save() {
-            localStorage.setItem('smk_bm_master_state', JSON.stringify(state));
+            localStorage.setItem('smk_bm_state_final', JSON.stringify(state));
         }
 
         function handleRouting() {
@@ -297,10 +295,10 @@
 
             if (hash === '#siswa') {
                 document.getElementById('page-siswa').classList.remove('hidden');
-                checkAlreadyAttended();
+                checkLocalAttendance();
             } else if (hash === '#admin') {
-                const isLogged = sessionStorage.getItem('bm_admin_logged');
-                if (isLogged) {
+                const loggedIn = sessionStorage.getItem('admin_session');
+                if (loggedIn) {
                     document.getElementById('page-admin-dashboard').classList.remove('hidden');
                     renderAdminDashboard();
                 } else {
@@ -318,43 +316,42 @@
             if (document.getElementById('dashboard-time')) document.getElementById('dashboard-time').textContent = timeStr;
             if (document.getElementById('dashboard-date')) document.getElementById('dashboard-date').textContent = dateStr;
 
-            // --- RISER OTOMATIS 15:00 ---
+            // Auto Reset at 16:00
             if (timeStr === CONFIG.resetTime) {
-                archiveAndReset(true);
+                checkAutoReset(true);
             }
         }
 
-        function archiveAndReset(force = false) {
+        function checkAutoReset(force = false) {
             const today = getTodayId();
-            const lastDate = localStorage.getItem('bm_last_archive_date');
+            const lastDate = localStorage.getItem('smk_bm_last_date_final');
             
             if (lastDate !== today || force) {
-                // Simpan data hari ini ke riwayat jika ada isinya
+                // Move current records to history if not empty
                 if (Object.keys(state.currentRecords).length > 0) {
-                    state.history.unshift({ date: lastDate || today, records: { ...state.currentRecords } });
-                    if (state.history.length > 60) state.history.pop(); // Keep 60 days
+                    // Check if date already exists in history to avoid duplicates
+                    const existingIdx = state.history.findIndex(h => h.date === (lastDate || today));
+                    const entry = { date: lastDate || today, records: { ...state.currentRecords } };
+                    
+                    if (existingIdx !== -1) {
+                        state.history[existingIdx] = entry;
+                    } else {
+                        state.history.unshift(entry);
+                    }
+                    
+                    if (state.history.length > 30) state.history.pop();
                 }
                 
                 state.currentRecords = {};
-                localStorage.setItem('bm_last_archive_date', today);
+                localStorage.setItem('smk_bm_last_date_final', today);
                 save();
                 location.reload(); 
             }
         }
 
-        function checkAutoReset() {
-            const today = getTodayId();
-            const lastDate = localStorage.getItem('bm_last_archive_date');
-            if (lastDate && lastDate !== today) {
-                archiveAndReset();
-            } else if (!lastDate) {
-                localStorage.setItem('bm_last_archive_date', today);
-            }
-        }
-
         function renderStudentSelect() {
             const select = document.getElementById('student-select');
-            select.innerHTML = '<option value="">-- Pilih Nama Lengkap --</option>';
+            select.innerHTML = '<option value="">-- Pilih Nama Lengkap Anda --</option>';
             DATA_SISWA.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.name;
@@ -363,23 +360,25 @@
             });
         }
 
-        function checkAlreadyAttended() {
+        function checkLocalAttendance() {
             const today = getTodayId();
-            const localToken = localStorage.getItem('bm_absen_lock_' + today);
-            
-            if (localToken && state.currentRecords[localToken]) {
+            const localToken = localStorage.getItem('absen_token_' + today);
+            if (localToken || state.currentRecords[localToken]) {
                 document.getElementById('student-form-area').classList.add('hidden');
                 document.getElementById('success-view').classList.remove('hidden');
-                document.getElementById('success-name').textContent = localToken;
             } else {
                 document.getElementById('student-form-area').classList.remove('hidden');
                 document.getElementById('success-view').classList.add('hidden');
             }
         }
 
+        // --- STUDENT ACTIONS ---
         window.submitAbsenSiswa = function() {
             const name = document.getElementById('student-select').value;
-            if (!name) return alert("Pilih nama Anda terlebih dahulu!");
+            if (!name) {
+                alert("Pilih nama Anda!");
+                return;
+            }
 
             if (state.currentRecords[name]) {
                 alert("Anda sudah melakukan absensi hari ini.");
@@ -389,28 +388,28 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
             
-            // --- LOGIKA TERLAMBAT (35 Menit dari 07:30 = 08:05) ---
+            // Late Logic (After 08:05)
             const [h, m] = timeStr.split(':').map(Number);
-            const isLate = (h > 8) || (h === 8 && m > 5);
+            const isLate = (h > 8) || (h === 8 && m > 5) || (h === 7 && m > (30 + CONFIG.lateThreshold));
 
             state.currentRecords[name] = {
                 name: name,
                 time: timeStr,
+                status: 'hadir',
                 isLate: isLate,
-                status: 'Hadir',
-                date: getTodayId(),
-                note: ''
+                timestamp: now.getTime()
             };
 
-            localStorage.setItem('bm_absen_lock_' + getTodayId(), name);
+            const todayId = getTodayId();
+            localStorage.setItem('absen_token_' + todayId, name);
             save();
-            checkAlreadyAttended();
+            checkLocalAttendance();
             
-            // --- SISTEM LANGSUNG KELUAR / BLANK SETELAH ABSEN ---
+            // System Exit Simulation
             setTimeout(() => {
-                alert("Absensi Berhasil. Sistem akan segera ditutup untuk sesi Anda.");
+                alert("Terima kasih. Anda telah terabsen. Halaman akan ditutup.");
                 window.location.href = "about:blank"; 
-            }, 3500);
+            }, 3000);
         };
 
         // --- ADMIN ACTIONS ---
@@ -418,16 +417,16 @@
             e.preventDefault();
             const user = document.getElementById('admin-username').value;
             const pass = document.getElementById('admin-password').value;
-            if (user === 'admin' && pass === CONFIG.adminPass) {
-                sessionStorage.setItem('bm_admin_logged', 'true');
+            if (user === CONFIG.adminUser && pass === CONFIG.adminPass) {
+                sessionStorage.setItem('admin_session', 'true');
                 handleRouting();
             } else {
-                alert("Kredensial Admin Salah!");
+                alert("Username atau Password Salah!");
             }
         };
 
         window.logoutAdmin = function() {
-            sessionStorage.removeItem('bm_admin_logged');
+            sessionStorage.removeItem('admin_session');
             window.location.hash = '#siswa';
         };
 
@@ -443,77 +442,84 @@
             if (!container) return;
             container.innerHTML = '';
 
-            let present = 0, late = 0;
-            DATA_SISWA.forEach(s => {
+            let presentCount = 0, lateCount = 0;
+            DATA_SISWA.forEach((s, idx) => {
                 const rec = state.currentRecords[s.name];
                 const card = document.createElement('div');
-                card.className = `p-5 rounded-3xl bg-white shadow-sm flex flex-col justify-between border-l-8 ${rec ? (rec.status === 'Hadir' ? (rec.isLate ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50') : 'border-yellow-500 bg-yellow-50') : 'border-gray-200'}`;
                 
+                let borderColor = "border-gray-100";
                 if (rec) {
-                    if (rec.status === 'Hadir') {
-                        if (rec.isLate) late++; else present++;
-                    }
+                    if (rec.status === 'hadir') {
+                        if (rec.isLate) { lateCount++; borderColor = "border-red-500 bg-red-50"; }
+                        else { presentCount++; borderColor = "border-green-500 bg-green-50"; }
+                    } else if (rec.status === 'izin') borderColor = "border-blue-500 bg-blue-50";
+                    else if (rec.status === 'sakit') borderColor = "border-yellow-500 bg-yellow-50";
+                    else if (rec.status === 'alpa') borderColor = "border-gray-900 bg-gray-100";
                 }
 
+                card.className = `p-4 rounded-2xl bg-white shadow-sm flex flex-col justify-between border-l-4 ${borderColor} transition-all hover:shadow-md cursor-pointer`;
+                card.onclick = () => openEditModal(s.name);
+
                 card.innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">${s.name.charAt(0)}</div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-[10px]">${s.name.charAt(0)}</div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-800 leading-tight">${s.name}</h4>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase">${s.gender}</p>
+                            <h4 class="text-[11px] font-bold text-gray-800 leading-tight">${s.name}</h4>
+                            <p class="text-[8px] text-gray-400 font-bold uppercase">${s.gender}</p>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between border-t border-dashed pt-4 mt-auto">
-                        <div class="text-[10px] font-bold">
+                    <div class="flex items-center justify-between border-t border-dashed pt-3 mt-auto">
+                        <div class="text-[10px] font-bold uppercase">
                             ${rec ? `
-                                <span class="text-blue-600 block">Status: ${rec.status} ${rec.time ? 'at ' + rec.time : ''}</span>
-                                ${rec.isLate ? '<span class="text-red-500">Keterangan: TERLAMBAT</span>' : ''}
-                                ${rec.note ? `<span class="text-orange-500 block">Note: ${rec.note}</span>` : ''}
-                            ` : `<span class="text-gray-300">Belum Melakukan Absensi</span>`}
+                                <span class="${rec.status === 'hadir' ? (rec.isLate ? 'text-red-600' : 'text-green-600') : 'text-blue-600'}">
+                                    ${rec.status} ${rec.time || ''}
+                                </span>
+                                ${rec.note ? `<p class="text-[8px] text-gray-400 normal-case italic">Ket: ${rec.note.substring(0,20)}...</p>` : ''}
+                            ` : `<span class="text-gray-300">Belum Absen</span>`}
                         </div>
-                        <button onclick="openEditModal('${s.name}')" class="p-2 text-blue-500 hover:bg-blue-100 rounded-xl transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        </button>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </div>
                 `;
                 container.appendChild(card);
             });
 
-            document.getElementById('stat-present').textContent = present;
-            document.getElementById('stat-late').textContent = late;
-            document.getElementById('stat-missing').textContent = DATA_SISWA.length - (present + late + Object.values(state.currentRecords).filter(r => r.status !== 'Hadir').length);
+            document.getElementById('stat-present').textContent = presentCount;
+            document.getElementById('stat-late').textContent = lateCount;
+            document.getElementById('stat-missing').textContent = DATA_SISWA.length - Object.keys(state.currentRecords).length;
         }
 
+        // --- EDIT LOGIC ---
         window.openEditModal = function(name) {
-            editingSiswaName = name;
-            const rec = state.currentRecords[name];
-            document.getElementById('edit-siswa-name').textContent = name;
-            document.getElementById('edit-status-select').value = rec ? (rec.status === 'Hadir' ? 'Hadir' : rec.status) : '';
-            document.getElementById('edit-keterangan').value = rec ? rec.note : '';
+            const rec = state.currentRecords[name] || { status: '', note: '' };
+            document.getElementById('modal-edit-name').textContent = name;
+            document.getElementById('edit-student-index').value = name;
+            document.getElementById('edit-status-select').value = rec.status;
+            document.getElementById('edit-keterangan').value = rec.note || '';
             document.getElementById('modal-edit-status').classList.remove('hidden');
         };
 
         window.closeEditModal = function() {
             document.getElementById('modal-edit-status').classList.add('hidden');
-            editingSiswaName = null;
         };
 
-        window.saveEditStatus = function() {
+        window.saveStudentEdit = function() {
+            const name = document.getElementById('edit-student-index').value;
             const status = document.getElementById('edit-status-select').value;
             const note = document.getElementById('edit-keterangan').value;
 
-            if (status === "") {
-                delete state.currentRecords[editingSiswaName];
+            if (!status) {
+                delete state.currentRecords[name];
             } else {
-                const existing = state.currentRecords[editingSiswaName] || {};
-                state.currentRecords[editingSiswaName] = {
-                    ...existing,
-                    name: editingSiswaName,
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                state.currentRecords[name] = {
+                    ...state.currentRecords[name],
+                    name: name,
                     status: status,
                     note: note,
-                    date: getTodayId(),
-                    isLate: existing.isLate || false,
-                    time: existing.time || (status === 'Hadir' ? new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' }) : null)
+                    time: state.currentRecords[name]?.time || timeStr,
+                    isLate: state.currentRecords[name]?.isLate || false
                 };
             }
 
@@ -523,7 +529,7 @@
         };
 
         window.manualResetAttendance = function() {
-            if (confirm("Apakah Anda yakin ingin menghapus SELURUH data absensi hari ini secara manual? Data tidak akan diarsipkan ke riwayat.")) {
+            if (confirm("Hapus SEMUA data absensi hari ini?")) {
                 state.currentRecords = {};
                 save();
                 renderAdminDashboard();
@@ -540,59 +546,47 @@
 
             if (historyEntry) {
                 const hist = historyEntry.records;
-                let html = '<div class="overflow-x-auto"><table class="w-full text-xs text-left text-gray-500 border-collapse"><thead class="bg-gray-50 uppercase font-bold text-gray-400"><tr><th class="p-3 border-b">Nama</th><th class="p-3 border-b text-center">Waktu</th><th class="p-3 border-b text-center">Status</th><th class="p-3 border-b">Catatan</th></tr></thead><tbody class="divide-y">';
+                let html = '<div class="overflow-x-auto"><table class="w-full text-xs text-left"><thead class="bg-gray-50 uppercase font-bold text-gray-400"><tr><th class="p-3">Nama</th><th class="p-3">Status</th><th class="p-3 text-center">Waktu</th><th class="p-3">Keterangan</th></tr></thead><tbody class="divide-y">';
                 DATA_SISWA.forEach(s => {
                     const r = hist[s.name];
-                    html += `<tr class="hover:bg-gray-50"><td class="p-3 font-bold text-gray-800">${s.name}</td><td class="p-3 text-center">${r && r.time ? r.time : '-'}</td><td class="p-3 text-center"><span class="px-2 py-1 rounded-full font-bold ${r ? (r.status === 'Hadir' ? (r.isLate ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600') : 'bg-yellow-100 text-yellow-600') : 'text-gray-300'}">${r ? (r.isLate ? 'TERLAMBAT' : r.status) : 'ALPHA'}</span></td><td class="p-3 italic text-gray-400">${r && r.note ? r.note : '-'}</td></tr>`;
+                    html += `<tr><td class="p-3 font-bold">${s.name}</td><td class="p-3"><span class="px-2 py-0.5 rounded ${r ? 'bg-blue-100 text-blue-700' : 'text-gray-300'}">${r ? r.status.toUpperCase() : 'ALPA'}</span></td><td class="p-3 text-center">${r ? r.time : '-'}</td><td class="p-3 text-gray-400 italic">${r?.note || '-'}</td></tr>`;
                 });
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } else {
-                container.innerHTML = '<p class="text-center py-10 text-gray-400 italic">Maaf, tidak ada rekaman absensi yang ditemukan untuk tanggal tersebut.</p>';
+                container.innerHTML = '<p class="text-center py-10 text-gray-400 italic">Tidak ada data untuk tanggal ini.</p>';
             }
         };
 
-        // --- EXPORT FUNCTIONS ---
+        // --- EXPORTS ---
         window.exportExcel = function() {
             const data = DATA_SISWA.map(s => {
                 const r = state.currentRecords[s.name];
                 return { 
-                    'Nama': s.name, 
-                    'L/P': s.gender, 
-                    'Status': r ? r.status : 'Alpha', 
-                    'Jam': r && r.time ? r.time : '-', 
-                    'Keterlambatan': r && r.isLate ? 'Ya' : 'Tidak',
-                    'Catatan Admin': r && r.note ? r.note : '-'
+                    'Nama': s.name, 'L/P': s.gender, 
+                    'Status': r ? r.status : 'Alpa', 
+                    'Waktu': r ? r.time : '-',
+                    'Keterangan': r ? r.note : '-' 
                 };
             });
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan Absensi");
-            XLSX.writeFile(wb, `Laporan_Absensi_BM_${getTodayId()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Absensi");
+            XLSX.writeFile(wb, `Absensi_SMKBM_${getTodayId()}.xlsx`);
         };
 
         window.exportPDF = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.text(`Laporan Presensi SMK Bina Mandiri`, 105, 15, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text(`Tanggal: ${getTodayId()}`, 105, 22, { align: 'center' });
-
-            const rows = DATA_SISWA.map((s, idx) => {
+            const rows = DATA_SISWA.map(s => {
                 const r = state.currentRecords[s.name];
-                return [idx + 1, s.name, s.gender, r ? r.status : 'Alpha', r && r.time ? r.time : '-', r && r.note ? r.note : '-'];
+                return [s.name, s.gender, r ? r.status : 'Alpa', r ? r.time : '-', r?.note || '-'];
             });
-
-            doc.autoTable({
-                head: [['No', 'Nama', 'L/P', 'Status', 'Jam', 'Note']],
-                body: rows,
-                startY: 30,
-                theme: 'grid'
-            });
-            doc.save(`Laporan_Presensi_BM_${getTodayId()}.pdf`);
+            doc.autoTable({ head: [['Nama', 'L/P', 'Status', 'Waktu', 'Ket']], body: rows, startY: 25 });
+            doc.save(`Laporan_SMKBM_${getTodayId()}.pdf`);
         };
 
-        // --- RUN INITIALIZATION ---
         init();
     </script>
 </body>
