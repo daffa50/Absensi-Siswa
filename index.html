@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>E-Presensi SMK Bina Mandiri</title>
+    <title>E-Presensi SMK Bina Mandiri (Online)</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Libraries for Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -14,7 +17,8 @@
     <style>
         body { font-family: "Poppins", sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
         .bg-cover-custom { 
-            background: linear-gradient(rgba(0, 50, 100, 0.7), rgba(0, 20, 50, 0.8)), url('unnamed.jpg');
+            /* Menggunakan background gradient biru gelap sebagai fallback jika gambar tidak ada */
+            background: linear-gradient(rgba(0, 50, 100, 0.8), rgba(0, 20, 50, 0.9));
             background-size: cover; background-position: center; background-attachment: fixed;
         }
         .glass-panel {
@@ -26,6 +30,13 @@
         .tab-btn.active { background-color: #1e40af; color: white; font-weight: 700; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f3f3; border-top: 3px solid #1e40af; border-radius: 50%;
+            width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen">
@@ -33,9 +44,11 @@
     <!-- VIEW: PRESENSI SISWA -->
     <div id="view-siswa" class="hidden min-h-screen bg-cover-custom flex flex-col items-center justify-center p-4">
         <div class="glass-panel rounded-[2rem] w-full max-w-lg p-8 text-center fade-in">
-            <img src="logo.png" alt="Logo" class="h-24 mx-auto mb-4 drop-shadow-lg">
+            <!-- Placeholder Logo -->
+            <div class="h-24 w-24 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-bold text-2xl shadow-lg">SMK</div>
+            
             <h1 class="text-2xl font-black text-gray-800">E-Presensi SMK BM</h1>
-            <p class="text-blue-700 font-bold text-xs mb-6 uppercase tracking-widest">Sistem Kehadiran Digital</p>
+            <p class="text-blue-700 font-bold text-xs mb-6 uppercase tracking-widest">Sistem Kehadiran Digital (Online)</p>
 
             <div id="form-container" class="space-y-5 text-left">
                 <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
@@ -60,7 +73,7 @@
                     <p class="text-[10px] text-gray-400 mt-2 ml-1">*Hanya bisa absen 1 kali setiap hari.</p>
                 </div>
 
-                <button onclick="kirimAbsensi()" id="btn-absen" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all">
+                <button onclick="kirimAbsensi()" id="btn-absen" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all flex justify-center items-center gap-2">
                     KIRIM KEHADIRAN
                 </button>
             </div>
@@ -70,8 +83,8 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <h2 class="text-xl font-black text-gray-800">Berhasil Terkirim!</h2>
-                <p class="text-gray-500 text-sm mt-2">Data absen telah diterima Admin.</p>
-                <p class="text-[10px] text-blue-500 mt-8 font-bold animate-pulse uppercase">Keluar Otomatis...</p>
+                <p class="text-gray-500 text-sm mt-2">Data absen telah disinkronkan ke Admin.</p>
+                <button onclick="window.location.reload()" class="mt-8 text-blue-500 text-xs font-bold uppercase hover:underline">Kembali</button>
             </div>
         </div>
     </div>
@@ -79,7 +92,7 @@
     <!-- VIEW: ADMIN LOGIN -->
     <div id="view-admin-login" class="hidden min-h-screen bg-cover-custom flex items-center justify-center p-4">
         <div class="glass-panel rounded-[2.5rem] w-full max-w-md p-10 text-center fade-in">
-            <img src="logo.png" alt="Logo" class="h-16 mx-auto mb-6">
+            <div class="h-16 w-16 bg-gray-800 rounded-full mx-auto mb-6 flex items-center justify-center text-white font-bold text-xl">BM</div>
             <h2 class="text-xl font-black text-gray-800 mb-8 tracking-tight text-center uppercase">Login Administrator</h2>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <input type="password" id="admin-password" placeholder="Kode Keamanan" class="w-full px-6 py-4 text-center text-lg font-mono border-2 border-gray-100 rounded-2xl outline-none focus:border-blue-600 transition" required>
@@ -93,8 +106,8 @@
     <div id="view-admin-dashboard" class="hidden min-h-screen bg-gray-50">
         <header class="bg-white border-b sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
-                <img src="logo.png" class="h-10">
-                <h1 class="text-sm font-black text-gray-800 uppercase tracking-tighter">Admin SMK BM</h1>
+                <div class="h-8 w-8 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">BM</div>
+                <h1 class="text-sm font-black text-gray-800 uppercase tracking-tighter">Admin SMK BM <span class="text-green-500 text-[10px] ml-1">● ONLINE</span></h1>
             </div>
             <button onclick="logout()" class="text-red-500 font-bold text-xs uppercase bg-red-50 px-4 py-2 rounded-xl">Keluar</button>
         </header>
@@ -109,6 +122,11 @@
 
             <!-- TAB CONTENT: TODAY -->
             <div id="content-today" class="fade-in">
+                <!-- Indikator Loading Data -->
+                <div id="loading-indicator" class="w-full text-center py-2 hidden">
+                    <div class="spinner"></div> <span class="text-xs text-gray-400 ml-2">Menyinkronkan data...</span>
+                </div>
+
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white p-4 rounded-2xl border-b-4 border-green-500 shadow-sm">
                         <p class="text-[9px] font-bold text-gray-400 uppercase">Hadir</p>
@@ -132,11 +150,12 @@
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-bold text-gray-800">Daftar Kehadiran</h2>
                         <div class="flex gap-2">
-                            <button onclick="exportExcel()" class="bg-green-600 text-white p-2 rounded-lg text-[10px] font-bold">EXCEL</button>
+                            <button onclick="exportExcel()" class="bg-green-600 text-white p-2 rounded-lg text-[10px] font-bold hover:bg-green-700">DOWNLOAD EXCEL</button>
                         </div>
                     </div>
                     <div id="siswa-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <!-- Rendered Items -->
+                        <div class="col-span-2 text-center text-gray-400 text-xs italic py-10">Menunggu data...</div>
                     </div>
                 </div>
             </div>
@@ -149,7 +168,7 @@
                         <input type="date" id="history-date" onchange="loadHistory()" class="border-2 border-gray-100 rounded-xl px-4 py-2 text-xs outline-none focus:border-blue-500">
                     </div>
                     <div id="history-result" class="min-h-[200px] flex items-center justify-center text-gray-400 italic text-xs bg-gray-50 rounded-2xl border-2 border-dashed">
-                        Silakan pilih tanggal.
+                        Silakan pilih tanggal untuk melihat arsip server.
                     </div>
                 </div>
             </div>
@@ -160,7 +179,9 @@
                     <div class="bg-white rounded-3xl p-6 shadow-sm text-center">
                         <h3 class="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">QRIS Absensi Siswa</h3>
                         <div class="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200 inline-block">
-                            <img src="Absensi Siswa_i.jpg" alt="QRIS" class="h-64 rounded-xl shadow-md">
+                            <div class="h-64 w-64 bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                                [Area Gambar QRIS]
+                            </div>
                         </div>
                         <p class="text-[10px] text-gray-400 mt-4">Tunjukkan QRIS ini di depan kelas/gerbang.</p>
                     </div>
@@ -171,8 +192,8 @@
                                 <h4 class="font-bold text-blue-800 text-[10px] uppercase">Waktu Masuk</h4>
                                 <p class="text-[10px] text-blue-600 mt-1 leading-relaxed">Senin-Kamis: 07:30 - 14:00<br>Jumat: 07:30 - 11:00<br>Batas Terlambat: +35 Menit (08:05)</p>
                             </div>
-                            <button onclick="resetManual()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg">RESET DATA HARI INI</button>
-                            <p class="text-[10px] text-red-400 italic text-center">Data hari ini akan dihapus dan murid bisa absen ulang.</p>
+                            <button onclick="resetManual()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg hover:bg-red-700">RESET DATA HARI INI</button>
+                            <p class="text-[10px] text-red-400 italic text-center">Data hari ini akan di-reset di server pusat.</p>
                         </div>
                     </div>
                 </div>
@@ -208,38 +229,22 @@
         </div>
     </div>
 
-    <!-- FIREBASE SDK & LOGIC -->
+    <!-- FIREBASE SDK & LOGIC (REAL-TIME UPDATE) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // =========================================================================
-        // PANDUAN PENTING:
-        // Ganti config di bawah ini dengan config Firebase Anda sendiri agar ONLINE.
-        // Jika tidak diganti, sistem akan menyimpan di HP (LocalStorage) saja.
-        // =========================================================================
-        const firebaseConfig = {
-            apiKey: "ISI_API_KEY_ANDA",
-            authDomain: "PROJECT_ID.firebaseapp.com",
-            projectId: "PROJECT_ID",
-            storageBucket: "PROJECT_ID.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
-        };
+        // --- KONFIGURASI OTOMATIS (ENVIRONMENT) ---
+        // Kode ini membaca konfigurasi sistem secara otomatis. Tidak perlu edit manual.
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        let db;
-        let isOnline = false;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        try {
-            if (firebaseConfig.apiKey !== "ISI_API_KEY_ANDA") {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                isOnline = true;
-                console.log("Firebase Terkoneksi.");
-            }
-        } catch (e) { console.error("Firebase Gagal Load:", e); }
-
-        // DATA SISWA (Nama Guru Dihapus)
+        // DATA SISWA
         const SISWA_DATA = [
             "Alvin Putra Pratama", "Andika", "Anwar Heriyansyah", "Arya Dimas Pratama",
             "Cornelius Rowen N", "Dafa Nofa Erlangga", "Devi Afriyanti", "Dila Mey Siska",
@@ -251,34 +256,72 @@
         ];
 
         let appState = { todayRecords: {} };
+        let currentUser = null;
 
         const getTodayKey = () => {
             const d = new Date();
             return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
         };
 
+        // --- AUTH & INIT ---
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth Error:", err);
+                alert("Gagal koneksi ke server database.");
+            }
+        }
+
         window.onload = function() {
-            initApp();
+            initAuth();
             renderSiswaSelect();
             startClock();
             router('siswa');
         };
 
-        async function initApp() {
-            const todayKey = getTodayKey();
-            if (isOnline) {
-                onSnapshot(doc(db, "absensi", todayKey), (snap) => {
-                    appState.todayRecords = snap.exists() ? snap.data().records : {};
-                    if (!document.getElementById('view-admin-dashboard').classList.contains('hidden')) renderAdminDashboard();
-                });
-            } else {
-                const local = localStorage.getItem('absen_' + todayKey);
-                if (local) appState.todayRecords = JSON.parse(local);
+        // Listener Login
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                startRealtimeListener();
             }
-            checkAutoReset();
-            setInterval(checkAutoReset, 60000);
+        });
+
+        // --- DATABASE LISTENER (JANTUNG SISTEM) ---
+        function startRealtimeListener() {
+            if (!currentUser) return;
+            const todayKey = getTodayKey();
+            
+            // Menggunakan path yang VALID (6 Segmen): artifacts / appId / public / data / data_absensi / tanggal
+            // Sebelumnya error karena 5 segmen (ganjil).
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'data_absensi', todayKey);
+
+            document.getElementById('loading-indicator').classList.remove('hidden');
+
+            onSnapshot(docRef, (snap) => {
+                document.getElementById('loading-indicator').classList.add('hidden');
+                
+                if (snap.exists()) {
+                    appState.todayRecords = snap.data().records || {};
+                } else {
+                    appState.todayRecords = {};
+                }
+
+                // Render ulang jika Admin sedang buka dashboard
+                if (!document.getElementById('view-admin-dashboard').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
+            }, (error) => {
+                console.error("Error listener:", error);
+            });
         }
 
+        // --- UI FUNCTIONS ---
         function renderSiswaSelect() {
             const select = document.getElementById('input-nama');
             SISWA_DATA.forEach(name => {
@@ -294,12 +337,11 @@
                 const now = new Date();
                 document.getElementById('clock-display').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
                 
-                // Info Status Realtime
                 const day = now.getDay(); 
                 const hour = now.getHours();
                 const minute = now.getMinutes();
                 const totalMins = (hour * 60) + minute;
-                const limitMins = (8 * 60) + 5; // 08:05
+                const limitMins = (8 * 60) + 5; 
 
                 infoBox.classList.remove('hidden');
                 if (day === 0 || day === 6) {
@@ -314,61 +356,53 @@
             }, 1000);
         }
 
-        function checkAutoReset() {
-            const now = new Date();
-            if (now.getHours() === 16 && now.getMinutes() === 0) {
-                window.location.reload(); // Refresh sistem setiap jam 4 sore
-            }
-        }
-
+        // --- FUNGSI ABSEN SISWA ---
         window.kirimAbsensi = async function() {
+            const btn = document.getElementById('btn-absen');
             const name = document.getElementById('input-nama').value;
+            
+            if (!currentUser) { alert("Sedang menghubungkan ke server... Tunggu sebentar."); return; }
             if (!name) { alert("Pilih nama Anda!"); return; }
 
-            // Cek Double Absen di HP ini
-            if (localStorage.getItem('has_absen_' + getTodayKey())) {
-                alert("Perangkat ini sudah digunakan untuk absen hari ini.");
+            // Cek Double Absen di Data Global (Server)
+            if (appState.todayRecords[name]) {
+                alert("Nama Anda sudah terdaftar absen hari ini di server.");
                 return;
             }
 
-            // Cek Double Absen di Data Global
-            if (appState.todayRecords[name]) {
-                alert("Nama Anda sudah terdaftar absen hari ini.");
-                return;
-            }
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner border-white border-t-transparent w-4 h-4"></div> Mengirim...`;
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
             const totalMins = (now.getHours() * 60) + now.getMinutes();
             const limitMins = (8 * 60) + 5; 
-
             const status = totalMins > limitMins ? "terlambat" : "hadir";
 
-            appState.todayRecords[name] = { status, time: timeStr, note: "", timestamp: Date.now() };
+            // Update state lokal dulu
+            const newRecord = { status, time: timeStr, note: "", timestamp: Date.now() };
+            appState.todayRecords[name] = newRecord;
 
+            // Kirim ke server
             await saveToBackend(getTodayKey(), appState.todayRecords);
+
+            // Simpan marker di HP agar tidak bisa absen lagi
             localStorage.setItem('has_absen_' + getTodayKey(), 'true');
 
             document.getElementById('form-container').classList.add('hidden');
             document.getElementById('success-message').classList.remove('hidden');
-
-            setTimeout(() => {
-                // Tampilan Keluar (Simulasi tutup link)
-                document.body.innerHTML = `
-                    <div class="min-h-screen bg-blue-900 flex flex-col items-center justify-center p-10 text-center">
-                        <img src="logo.png" class="h-20 mb-6 grayscale opacity-50">
-                        <h1 class="text-white font-bold text-xl">Sesi Berakhir</h1>
-                        <p class="text-blue-300 text-sm mt-2">Absensi Anda (${name}) sudah kami simpan. Silakan tutup tab ini.</p>
-                    </div>
-                `;
-            }, 3000);
+            btn.disabled = false;
         };
 
         async function saveToBackend(key, data) {
-            if (isOnline) {
-                await setDoc(doc(db, "absensi", key), { records: data }, { merge: true });
-            } else {
-                localStorage.setItem('absen_' + key, JSON.stringify(data));
+            if (!currentUser) return;
+            // UPDATE: Menambahkan 'data_absensi' agar path menjadi genap (6 segmen)
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'data_absensi', key);
+            try {
+                await setDoc(docRef, { records: data }, { merge: true });
+            } catch (e) {
+                console.error("Gagal simpan:", e);
+                alert("Gagal menyimpan data ke server.");
             }
         }
 
@@ -376,7 +410,7 @@
         window.handleLogin = function(e) {
             e.preventDefault();
             const pass = document.getElementById('admin-password').value;
-            if (pass === "admin123") { // PASSWORD ADMIN
+            if (pass === "admin123") { 
                 localStorage.setItem('isAuthBM', 'true');
                 router('admin-dashboard');
             } else { alert("Kode Salah!"); }
@@ -455,14 +489,13 @@
             }
             await saveToBackend(getTodayKey(), appState.todayRecords);
             closeModal();
-            if (!isOnline) renderAdminDashboard();
+            // Tidak perlu panggil renderAdminDashboard() manual, karena onSnapshot akan menangkap perubahannya
         };
 
         window.resetManual = async function() {
-            if (confirm("Hapus semua absen hari ini? Murid bisa absen ulang.")) {
+            if (confirm("Hapus semua absen hari ini di SERVER? Semua data murid hari ini akan hilang.")) {
                 appState.todayRecords = {};
                 await saveToBackend(getTodayKey(), {});
-                renderAdminDashboard();
             }
         };
 
@@ -488,19 +521,20 @@
         window.loadHistory = async function() {
             const date = document.getElementById('history-date').value;
             const container = document.getElementById('history-result');
-            container.innerHTML = '<p class="animate-pulse">Memuat arsip...</p>';
+            
+            if (!currentUser) return;
 
+            container.innerHTML = '<div class="text-center w-full"><div class="spinner"></div><br>Mengambil data server...</div>';
+
+            // UPDATE: Menambahkan 'data_absensi' agar path menjadi genap (6 segmen)
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'data_absensi', date);
+            const snap = await getDoc(docRef);
+            
             let hData = {};
-            if (isOnline) {
-                const snap = await getDoc(doc(db, "absensi", date));
-                if (snap.exists()) hData = snap.data().records;
-            } else {
-                const local = localStorage.getItem('absen_' + date);
-                if (local) hData = JSON.parse(local);
-            }
+            if (snap.exists()) hData = snap.data().records;
 
             if (Object.keys(hData).length === 0) {
-                container.innerHTML = 'Data tidak ditemukan.';
+                container.innerHTML = 'Data tanggal ini belum ada di server.';
                 return;
             }
 
